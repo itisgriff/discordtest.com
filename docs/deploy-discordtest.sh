@@ -9,9 +9,14 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+# Load NVM and set NPM path
+export NVM_DIR="/home/ubuntu/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+NPM_PATH="/home/ubuntu/.nvm/versions/node/v23.3.0/bin/npm"
+
 # Check required commands
 command -v node >/dev/null 2>&1 || { echo "Node.js is required but not installed. Aborting." >&2; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo "npm is required but not installed. Aborting." >&2; exit 1; }
+command -v $NPM_PATH >/dev/null 2>&1 || { echo "npm is required but not installed at $NPM_PATH. Aborting." >&2; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "git is required but not installed. Aborting." >&2; exit 1; }
 
 echo "Starting deployment..."
@@ -20,13 +25,10 @@ echo "Starting deployment..."
 DEPLOY_DIR="/var/www/discordtest.com"
 TEMP_DIR="/tmp/discordtest-deploy"
 
-# Get npm path
-NPM_PATH=$(which npm)
-
 # Ensure PM2 is installed globally
 if ! command -v pm2 >/dev/null 2>&1; then
   echo "Installing PM2 globally..."
-  npm install -g pm2
+  $NPM_PATH install -g pm2
 fi
 
 # Create temporary directory for build process
@@ -36,27 +38,29 @@ mkdir -p $TEMP_DIR
 
 # Clone repository to temporary directory
 echo "Cloning repository..."
-if [ -z "$GITHUB_TOKEN" ]; then
-  echo "GITHUB_TOKEN environment variable is not set"
-  exit 1
-fi
-
 git clone https://x-access-token:${GITHUB_TOKEN}@github.com/itisgriff/DiscordTest.com.git $TEMP_DIR
 cd $TEMP_DIR
 
-# Check for required files
-if [ ! -f ".env" ]; then
-  echo "Error: .env file not found"
+# Check for .env file in deployment directory and copy if it exists
+if [ -f "$DEPLOY_DIR/.env" ]; then
+  echo "Copying existing .env from deployment directory..."
+  cp "$DEPLOY_DIR/.env" .
+else
+  echo "Error: No .env file found in $DEPLOY_DIR"
   exit 1
 fi
 
+# Source environment variables
+echo "Loading environment variables..."
+export $(cat .env | grep -v '^#' | xargs)
+
 # Install all dependencies (including dev dependencies) for building
 echo "Installing dependencies..."
-npm install
+$NPM_PATH install
 
 # Build frontend
 echo "Building frontend..."
-npm run build
+$NPM_PATH run build
 
 # Prepare server files
 echo "Setting up server..."
@@ -69,7 +73,6 @@ cd $DEPLOY_DIR
 rm -rf node_modules
 cp $TEMP_DIR/package.json .
 cp $TEMP_DIR/package-lock.json .
-cp $TEMP_DIR/.env .
 $NPM_PATH install --production
 
 # Copy built frontend files
@@ -83,13 +86,12 @@ chmod -R 750 $DEPLOY_DIR
 
 # Start/Restart PM2 process
 echo "Starting server..."
-sudo -u www-data bash -c "PATH=$PATH HOME=/var/www pm2 restart discord-api || PATH=$PATH HOME=/var/www pm2 start server/index.js --name discord-api"
-sudo -u www-data bash -c "PATH=$PATH HOME=/var/www pm2 save"
-sudo -u www-data bash -c "PATH=$PATH HOME=/var/www pm2 startup"
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 restart discord-api || PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 start server/index.js --name discord-api"
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 save"
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 startup"
 
 # Clean up temporary files
 echo "Cleaning up..."
 rm -rf $TEMP_DIR
 
 echo "Deployment completed successfully!"
-echo "Please ensure your environment variables are properly configured." 
