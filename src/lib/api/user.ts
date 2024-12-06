@@ -1,55 +1,47 @@
 import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
 
-const API_BASE = '/api/discord';
+const API_BASE = 'http://localhost:3000/api';
 
 // Lookup user by ID
 export async function lookupUser(userId: string): Promise<DiscordUser | null> {
-  const token = import.meta.env.VITE_DISCORD_BOT_TOKEN;
-  if (!token) {
-    toast.error('Discord bot token is not configured');
-    return null;
-  }
-
   try {
-    const response = await fetch(`${API_BASE}/users/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bot ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      mode: 'cors',
-    });
+    const response = await fetch(`${API_BASE}/users/${userId}`);
+    const data = await response.json();
 
-    if (response.status === 200) {
-      const data = await response.json();
-      return {
-        id: data.id,
-        username: data.username,
-        avatar: data.avatar 
-          ? `https://cdn.discordapp.com/avatars/${userId}/${data.avatar}.png`
-          : null,
-        banner: data.banner
-          ? `https://cdn.discordapp.com/banners/${userId}/${data.banner}.png`
-          : null,
-        badges: [], // You'll need to implement badge logic based on user flags
-        createdAt: new Date(Number(BigInt(userId) >> 22n) + 1420070400000),
-        accentColor: data.accent_color || undefined,
-      };
-    } else if (response.status === 401) {
-      toast.error('Unauthorized: Check your bot token and permissions');
-      return null;
-    } else if (response.status === 404) {
-      toast.error('User not found');
-      return null;
-    } else {
-      toast.error(`Failed to fetch user: ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 401) {
+        toast.error('Unauthorized: Check bot permissions');
+      } else if (response.status === 404) {
+        toast.error('User not found');
+      } else {
+        toast.error(`Failed to fetch user: ${data.error || response.status}`);
+      }
       return null;
     }
+
+    return {
+      id: data.id,
+      username: data.username,
+      discriminator: data.discriminator,
+      public_flags: data.public_flags,
+      flags: data.flags,
+      avatar: data.avatar 
+        ? `https://cdn.discordapp.com/avatars/${userId}/${data.avatar}.png`
+        : null,
+      banner: data.banner
+        ? `https://cdn.discordapp.com/banners/${userId}/${data.banner}.png`
+        : null,
+      accent_color: data.accent_color,
+      global_name: data.global_name,
+      avatar_decoration_data: data.avatar_decoration_data,
+      banner_color: data.banner_color,
+      clan: data.clan,
+      primary_guild: data.primary_guild,
+      createdAt: new Date(Number(BigInt(userId) >> 22n) + 1420070400000),
+    };
   } catch (error) {
-    console.error('Error looking up user:', error);
-    toast.error('Failed to connect to Discord API');
+    toast.error('Failed to connect to API');
     return null;
   }
 } 
