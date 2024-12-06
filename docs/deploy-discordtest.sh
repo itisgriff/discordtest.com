@@ -38,7 +38,7 @@ mkdir -p $TEMP_DIR
 
 # Clone repository to temporary directory
 echo "Cloning repository..."
-git clone https://x-access-token:${GITHUB_TOKEN}@github.com/itisgriff/DiscordTest.com.git $TEMP_DIR
+git clone https://itisgriff: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@github.com/itisgriff/DiscordTest.com.git $TEMP_DIR
 cd $TEMP_DIR
 
 # Check for .env file in deployment directory and copy if it exists
@@ -57,6 +57,10 @@ export $(cat .env | grep -v '^#' | xargs)
 # Install all dependencies (including dev dependencies) for building
 echo "Installing dependencies..."
 $NPM_PATH install
+
+# Install TypeScript globally
+echo "Installing TypeScript globally..."
+$NPM_PATH install -g typescript
 
 # Build frontend
 echo "Building frontend..."
