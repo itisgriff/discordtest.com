@@ -9,6 +9,20 @@ This guide explains how to deploy the Discord Tools API server on Ubuntu.
 - PM2 for process management
 - Nginx (optional, for reverse proxy)
 
+## Server File Structure
+
+The server files are organized as follows:
+```
+/var/www/discordtest/
+├── index.js           # Main server entry point
+├── server/           # Server-specific files
+│   ├── routes/      # API route handlers
+│   ├── middleware/  # Express middleware
+│   └── utils/       # Utility functions
+├── dist/            # Built frontend files
+└── .env             # Environment configuration
+```
+
 ## Installation Steps
 
 1. Install Node.js and npm:
@@ -40,19 +54,45 @@ cp .env.example .env
 nano .env
 ```
 
-## Running the Server
+## Deployment
+
+The easiest way to deploy is using the provided deployment script:
+
+```bash
+sudo chmod +x docs/deploy-discordtest.sh
+./docs/deploy-discordtest.sh
+```
+
+This script will:
+1. Set up the deployment directory
+2. Pull the latest changes
+3. Install dependencies
+4. Copy server files to the correct location
+5. Build the project
+6. Start/restart the PM2 process
+
+## Manual Deployment Steps
+
+If you prefer to deploy manually:
 
 1. Build the project:
 ```bash
 npm run build
 ```
 
-2. Start with PM2:
+2. Copy server files:
 ```bash
-pm2 start server/index.js --name discord-api
+mkdir -p server
+cp -r src/server/* server/
+cp server/index.js .
 ```
 
-3. Enable startup on boot:
+3. Start with PM2:
+```bash
+pm2 start index.js --name discord-api
+```
+
+4. Enable startup on boot:
 ```bash
 pm2 startup
 pm2 save
