@@ -44,14 +44,14 @@ else
   mkdir -p $DEPLOY_DIR
   cat > "$DEPLOY_DIR/.env" << EOL
 # Discord Bot Token
-DISCORD_BOT_TOKEN=REDACTED
+DISCORD_BOT_TOKEN=your_bot_token_here
 
 # Cloudflare Turnstile Keys
-VITE_TURNSTILE_SITE_KEY=0x4AAAAAAA1qZt-MiCPVwWW7
-TURNSTILE_SECRET_KEY=0x4AAAAAAA1qZqBWeQUtpbqqI5f9Ii3ou4Q
+VITE_TURNSTILE_SITE_KEY=your_site_key_here
+TURNSTILE_SECRET_KEY=your_secret_key_here
 
 # GitHub Token (Required for deployment)
-GITHUB_TOKEN=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
+GITHUB_TOKEN=your_github_token_here
 
 # Node Environment (Optional, defaults to development)
 NODE_ENV=production
@@ -74,22 +74,22 @@ if [ ! -d "dist" ]; then
   exit 1
 fi
 
-# Prepare server files
+# Set up server
 echo "Setting up server..."
 mkdir -p $DEPLOY_DIR/server
 cp -r server/* $DEPLOY_DIR/server/
+cp .env $DEPLOY_DIR/server/
 
-# Install production dependencies for server
+# Install server dependencies
 echo "Installing server dependencies..."
-cd $DEPLOY_DIR
+cd $DEPLOY_DIR/server
 rm -rf node_modules
-cp $TEMP_DIR/package.json .
-cp $TEMP_DIR/package-lock.json .
 $NPM_PATH install --production
 
 # Copy built frontend files
 echo "Copying frontend files..."
-cp -r $TEMP_DIR/dist/* $DEPLOY_DIR/
+cd $DEPLOY_DIR
+cp -r $TEMP_DIR/dist/* .
 
 # Set proper permissions
 echo "Setting permissions..."
@@ -102,9 +102,15 @@ if ! command -v pm2 >/dev/null 2>&1; then
   $NPM_PATH install -g pm2
 fi
 
-# Start/Restart PM2 process
+# Stop existing PM2 process if it exists
+echo "Stopping existing PM2 process..."
+sudo -u www-data pm2 stop discord-api 2>/dev/null || true
+sudo -u www-data pm2 delete discord-api 2>/dev/null || true
+
+# Start server with PM2
 echo "Starting server..."
-sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 restart discord-api || PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 start server/index.js --name discord-api"
+cd $DEPLOY_DIR/server
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 start index.js --name discord-api"
 sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 save"
 sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 startup"
 
