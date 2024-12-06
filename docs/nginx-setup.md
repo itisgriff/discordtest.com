@@ -71,7 +71,35 @@ server {
             return 204;
         }
 
-                add_header X-Frame-Options "SAMEORIGIN" always;
+        # Discord API proxy
+        location /api/discord/ {
+            proxy_pass https://discord.com/api/v10/;
+            proxy_set_header Host discord.com;
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # CORS headers for Discord API
+            add_header 'Access-Control-Allow-Origin' 'https://discordtest.com' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+            # Handle preflight
+            if ($request_method = 'OPTIONS') {
+                add_header 'Access-Control-Allow-Origin' 'https://discordtest.com' always;
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+                add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
+                add_header 'Access-Control-Allow-Credentials' 'true' always;
+                add_header 'Access-Control-Max-Age' 1728000;
+                add_header 'Content-Type' 'text/plain charset=UTF-8';
+                add_header 'Content-Length' 0;
+                return 204;
+            }
+        }
+
+        add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
     }
