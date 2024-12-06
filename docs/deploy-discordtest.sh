@@ -58,9 +58,10 @@ export $(cat .env | grep -v '^#' | xargs)
 echo "Installing dependencies..."
 $NPM_PATH install
 
-# Install TypeScript globally
-echo "Installing TypeScript globally..."
-$NPM_PATH install -g typescript
+# Install TypeScript and Vite types globally
+echo "Installing TypeScript and Vite types globally..."
+$NPM_PATH install -g typescript @types/node
+$NPM_PATH install --save-dev @types/node @vitejs/plugin-react vite
 
 # Build frontend
 echo "Building frontend..."
