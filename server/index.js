@@ -140,12 +140,29 @@ app.post('/api/vanity/:code', async (req, res) => {
       headers: getDiscordHeaders()
     });
 
+    const data = await response.json();
+
     if (response.status === 404) {
       return res.json({ available: true });
-    } else {
-      const data = await response.json();
-      return res.json({ available: false, guild: data.guild });
     }
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.message || 'Failed to check vanity URL' });
+    }
+
+    if (!data.guild) {
+      return res.status(500).json({ error: 'Invalid response from Discord API' });
+    }
+
+    return res.json({
+      available: false,
+      guild: {
+        id: data.guild.id,
+        name: data.guild.name,
+        icon: data.guild.icon,
+        approximate_member_count: data.approximate_member_count
+      }
+    });
   } catch (error) {
     console.error('Vanity check error:', error);
     res.status(500).json({ error: 'Failed to check vanity URL' });
@@ -154,11 +171,41 @@ app.post('/api/vanity/:code', async (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+  console.error('Server Error:', err.stack);
+  
+  // Handle JSON parsing errors
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'Invalid JSON format' });
+  }
+
+  // Handle other known errors
+  if (err.status) {
+    return res.status(err.status).json({ error: err.message });
+  }
+
+  // Default error response
+  res.status(500).json({ 
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message 
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 }); 

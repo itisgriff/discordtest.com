@@ -16,7 +16,7 @@ export default function UserLookup() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string>('');
-  const [needsVerification, setNeedsVerification] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   const handleSearch = useCallback(async () => {
     if (!userId) {
@@ -24,7 +24,7 @@ export default function UserLookup() {
       return;
     }
 
-    if (needsVerification && !turnstileToken) {
+    if (showVerification && !turnstileToken) {
       toast.error("Please complete the verification challenge");
       return;
     }
@@ -35,28 +35,27 @@ export default function UserLookup() {
       
       if (!result) {
         toast.error('Failed to lookup user');
-        setNeedsVerification(true);
+        setShowVerification(true);
         return;
       }
 
-      const unknownResult = result as unknown;
-      if (typeof (unknownResult as { error?: string }).error === 'string') {
-        const error = (unknownResult as { error: string }).error;
-        toast.error(error);
-        if (error.includes('verification') || error.includes('Too many requests')) {
-          setNeedsVerification(true);
+      if ('error' in result && typeof result.error === 'string') {
+        toast.error(result.error);
+        if (result.error.includes('verification') || result.error.includes('Too many requests')) {
+          setShowVerification(true);
         }
       } else {
-        setUser(result as DiscordUser);
+        setUser(result);
+        setShowVerification(false);
       }
     } catch (error) {
       console.error('API Error:', error);
       toast.error('Failed to lookup user');
-      setNeedsVerification(true);
+      setShowVerification(true);
     } finally {
       setLoading(false);
     }
-  }, [userId, turnstileToken, needsVerification]);
+  }, [userId, turnstileToken, showVerification]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !loading) {
@@ -81,7 +80,7 @@ export default function UserLookup() {
         </p>
 
         <Card className="p-6">
-          <div className="flex flex-col gap-4">
+          <div className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Enter user ID"
@@ -89,58 +88,61 @@ export default function UserLookup() {
                 onChange={(e) => setUserId(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={loading}
+                className="flex-1"
               />
               <Button 
-                onClick={() => handleSearch()}
-                disabled={loading || !userId || (needsVerification && !turnstileToken)}
-                className="bg-accent hover:bg-accent/90"
+                onClick={handleSearch}
+                disabled={loading || !userId || (showVerification && !turnstileToken)}
+                className="bg-accent hover:bg-accent/90 min-w-[100px]"
                 aria-label={loading ? "Loading..." : "Search"}
               >
                 {loading ? "Loading..." : "Search"}
               </Button>
             </div>
 
-            {needsVerification && (
-              <div className="flex justify-center">
+            {showVerification && (
+              <div className="flex flex-col items-center gap-2 p-4 bg-accent/5 rounded-lg border border-accent/10">
+                <p className="text-sm text-muted-foreground mb-2">Please verify that you're human:</p>
                 <Turnstile
                   siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                  onVerify={setTurnstileToken}
+                  onVerify={(token) => {
+                    setTurnstileToken(token);
+                    handleSearch();
+                  }}
                 />
               </div>
             )}
 
             {user && (
-              <div className="mt-4 p-4 bg-card rounded-lg border">
-                <div className="flex items-center gap-4">
-                  {user.avatar && (
-                    <img 
-                      src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`}
-                      alt={`${user.username}'s avatar`}
-                      className="w-16 h-16 rounded-full"
-                    />
-                  )}
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {user.global_name || user.username}
-                      {user.discriminator !== '0' && (
-                        <span className="text-muted-foreground">#{user.discriminator}</span>
-                      )}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Created {format(new Date(user.createdAt), 'PPP')}
-                    </p>
-                  </div>
-                </div>
-
-                {user.flags && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {getUserFlags(user.flags).map(flag => (
-                      <Badge key={flag} variant="secondary">
-                        {flag}
-                      </Badge>
-                    ))}
-                  </div>
+              <div className="flex items-center gap-4 p-4 bg-card rounded-lg border animate-in fade-in-50">
+                {user.avatar && (
+                  <img 
+                    src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`}
+                    alt={`${user.username}'s avatar`}
+                    className="w-16 h-16 rounded-full"
+                  />
                 )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">
+                    {user.global_name || user.username}
+                    {user.discriminator !== '0' && (
+                      <span className="text-muted-foreground">#{user.discriminator}</span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Created {format(new Date(user.createdAt), 'PPP')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {user?.flags && (
+              <div className="flex flex-wrap gap-2 p-4 bg-card rounded-lg border animate-in fade-in-50 slide-in-from-top-2">
+                {getUserFlags(user.flags).map(flag => (
+                  <Badge key={flag} variant="secondary">
+                    {flag}
+                  </Badge>
+                ))}
               </div>
             )}
           </div>
