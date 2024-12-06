@@ -1,46 +1,77 @@
 import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = import.meta.env.PROD 
+  ? 'https://api.discordtest.com/api'
+  : 'http://localhost:3000/api';
+
+const DEFAULT_HEADERS = {
+  'Content-Type': 'application/json',
+};
+
+interface ErrorResponse {
+  error: string;
+}
 
 // Lookup user by ID
-export async function lookupUser(userId: string): Promise<DiscordUser | null> {
+export async function lookupUser(userId: string, turnstileToken: string): Promise<DiscordUser | null> {
   try {
-    const response = await fetch(`${API_BASE}/users/${userId}`);
-    const data = await response.json();
+    // Input validation
+    if (!userId.match(/^\d+$/)) {
+      toast.error('Invalid user ID format');
+      return null;
+    }
+
+    const response = await fetch(`${API_BASE}/users/${userId}`, {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({ token: turnstileToken }),
+    });
+
+    const data = await response.json() as DiscordUser | ErrorResponse;
 
     if (!response.ok) {
-      if (response.status === 401) {
-        toast.error('Unauthorized: Check bot permissions');
-      } else if (response.status === 404) {
-        toast.error('User not found');
+      if ('error' in data) {
+        switch (response.status) {
+          case 401:
+            toast.error('Unauthorized: Check bot permissions');
+            break;
+          case 403:
+            toast.error('Verification failed. Please try again.');
+            break;
+          case 404:
+            toast.error('User not found');
+            break;
+          case 429:
+            toast.error('Too many requests. Please wait a moment.');
+            break;
+          default:
+            toast.error(`Failed to fetch user: ${data.error}`);
+        }
       } else {
-        toast.error(`Failed to fetch user: ${data.error || response.status}`);
+        toast.error('An unexpected error occurred');
       }
       return null;
     }
 
+    // Type guard to ensure we have a DiscordUser
+    if (!('id' in data)) {
+      toast.error('Invalid response format from server');
+      return null;
+    }
+
     return {
-      id: data.id,
-      username: data.username,
-      discriminator: data.discriminator,
-      public_flags: data.public_flags,
-      flags: data.flags,
+      ...data,
       avatar: data.avatar 
-        ? `https://cdn.discordapp.com/avatars/${userId}/${data.avatar}.png`
+        ? `https://cdn.discordapp.com/avatars/${userId}/${data.avatar}.png?size=256`
         : null,
       banner: data.banner
-        ? `https://cdn.discordapp.com/banners/${userId}/${data.banner}.png`
+        ? `https://cdn.discordapp.com/banners/${userId}/${data.banner}.png?size=600`
         : null,
-      accent_color: data.accent_color,
-      global_name: data.global_name,
-      avatar_decoration_data: data.avatar_decoration_data,
-      banner_color: data.banner_color,
-      clan: data.clan,
-      primary_guild: data.primary_guild,
       createdAt: new Date(Number(BigInt(userId) >> 22n) + 1420070400000),
     };
   } catch (error) {
+    console.error('API Error:', error);
     toast.error('Failed to connect to API');
     return null;
   }

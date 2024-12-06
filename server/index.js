@@ -3,83 +3,108 @@ import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
 import { Headers } from 'node-fetch';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Initialize stats from .env or set to 0 if not exists
-const stats = {
-  totalLookups: Number(process.env.TOTAL_LOOKUPS || 0),
-  availableVanities: Number(process.env.AVAILABLE_VANITIES || 0),
-  takenVanities: Number(process.env.TAKEN_VANITIES || 0)
+// Security middleware
+app.use(helmet());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://discordtest.com' 
+    : 'http://localhost:5173'
+}));
+app.use(express.json());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
+
+// Cached Discord headers
+const getDiscordHeaders = () => {
+  const discordToken = process.env.DISCORD_BOT_TOKEN;
+  if (!discordToken) {
+    throw new Error('Bot token not configured');
+  }
+
+  return new Headers({
+    'Authorization': `Bot ${discordToken}`,
+    'Content-Type': 'application/json',
+    'User-Agent': 'DiscordBot (https://discordtest.com, 1.0.0)'
+  });
 };
 
-// Function to update .env file
-async function updateEnvFile() {
+// Verify Turnstile token with caching
+const tokenCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function verifyTurnstileToken(token) {
+  // Check cache first
+  const cached = tokenCache.get(token);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.valid;
+  }
+
   try {
-    const envPath = path.resolve(__dirname, '../.env');
-    const envContent = await fs.readFile(envPath, 'utf-8');
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        secret: process.env.TURNSTILE_SECRET_KEY,
+        response: token,
+      }),
+    });
+
+    const data = await response.json();
     
-    // Update or add stats variables
-    const updatedContent = envContent
-      .replace(/^TOTAL_LOOKUPS=.*/m, `TOTAL_LOOKUPS=${stats.totalLookups}`)
-      .replace(/^AVAILABLE_VANITIES=.*/m, `AVAILABLE_VANITIES=${stats.availableVanities}`)
-      .replace(/^TAKEN_VANITIES=.*/m, `TAKEN_VANITIES=${stats.takenVanities}`);
+    // Cache the result
+    tokenCache.set(token, {
+      valid: data.success,
+      timestamp: Date.now()
+    });
 
-    // If variables don't exist, add them
-    const newLines = [];
-    if (!updatedContent.includes('TOTAL_LOOKUPS=')) {
-      newLines.push(`TOTAL_LOOKUPS=${stats.totalLookups}`);
-    }
-    if (!updatedContent.includes('AVAILABLE_VANITIES=')) {
-      newLines.push(`AVAILABLE_VANITIES=${stats.availableVanities}`);
-    }
-    if (!updatedContent.includes('TAKEN_VANITIES=')) {
-      newLines.push(`TAKEN_VANITIES=${stats.takenVanities}`);
+    // Cleanup old cache entries
+    if (tokenCache.size > 1000) {
+      const now = Date.now();
+      for (const [key, value] of tokenCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+          tokenCache.delete(key);
+        }
+      }
     }
 
-    // Write back to .env file
-    await fs.writeFile(
-      envPath,
-      newLines.length ? `${updatedContent}\n${newLines.join('\n')}` : updatedContent
-    );
+    return data.success;
   } catch (error) {
-    console.error('Error updating .env file:', error);
+    console.error('Turnstile verification error:', error);
+    return false;
   }
 }
 
-app.use(cors());
-app.use(express.json());
-
-// Stats endpoints
-app.get('/api/stats', (req, res) => {
-  res.json(stats);
-});
-
 // Discord API endpoint
-app.get('/api/users/:userId', async (req, res) => {
+app.post('/api/users/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const token = process.env.DISCORD_BOT_TOKEN;
-    
-    if (!token) {
-      return res.status(500).json({ error: 'Bot token not configured' });
+    const { token } = req.body;
+
+    if (!userId.match(/^\d+$/)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
-    const headers = new Headers({
-      'Authorization': `Bot ${token}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'DiscordBot (https://discordtest.com, 1.0.0)'
-    });
+    // Verify Turnstile token
+    const isValid = await verifyTurnstileToken(token);
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid Turnstile token' });
+    }
 
     const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
-      headers
+      headers: getDiscordHeaders()
     });
 
     const data = await response.json();
@@ -88,50 +113,52 @@ app.get('/api/users/:userId', async (req, res) => {
       return res.status(response.status).json(data);
     }
 
-    // Increment lookup counter and update .env
-    stats.totalLookups++;
-    await updateEnvFile();
     res.json(data);
   } catch (error) {
+    console.error('User lookup error:', error);
     res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
 
 // Vanity URL check endpoint
-app.get('/api/vanity/:code', async (req, res) => {
+app.post('/api/vanity/:code', async (req, res) => {
   try {
     const { code } = req.params;
-    const token = process.env.DISCORD_BOT_TOKEN;
-    
-    if (!token) {
-      return res.status(500).json({ error: 'Bot token not configured' });
+    const { token } = req.body;
+
+    if (!code.match(/^[a-zA-Z0-9-]+$/)) {
+      return res.status(400).json({ error: 'Invalid vanity URL format' });
     }
 
-    const headers = new Headers({
-      'Authorization': `Bot ${token}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'DiscordBot (https://discordtest.com, 1.0.0)'
-    });
+    // Verify Turnstile token
+    const isValid = await verifyTurnstileToken(token);
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid Turnstile token' });
+    }
 
     const response = await fetch(`https://discord.com/api/v10/invites/${code}`, {
-      headers
+      headers: getDiscordHeaders()
     });
 
     if (response.status === 404) {
-      stats.availableVanities++;
-      await updateEnvFile();
       return res.json({ available: true });
     } else {
-      stats.takenVanities++;
-      await updateEnvFile();
       const data = await response.json();
       return res.json({ available: false, guild: data.guild });
     }
   } catch (error) {
+    console.error('Vanity check error:', error);
     res.status(500).json({ error: 'Failed to check vanity URL' });
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something broke!' });
+});
+
+// Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 }); 
