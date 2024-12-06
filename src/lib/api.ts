@@ -49,38 +49,26 @@ interface InviteResponse {
   guild: {
     id: string;
     name: string;
+    icon: string | null;
     features: string[];
+    approximate_member_count: number;
   };
-}
-
-interface GuildResponse {
-  id: string;
-  name: string;
-  icon: string | null;
-  features: string[];
-  approximate_member_count: number;
 }
 
 // Check vanity URL availability
 export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
   try {
-    // First try to fetch the invite without authentication
+    // Try to fetch the invite without authentication
     const inviteResponse = await makePublicRequest<InviteResponse>(`/invites/${code}`);
-
-    // If we get here, the URL is taken. Let's get more guild info using authentication
-    const guildInfo = await makeAuthenticatedRequest<GuildResponse>(
-      `/guilds/${inviteResponse.guild.id}`,
-      { method: 'GET' }
-    );
 
     return {
       available: false,
       error: null,
       guildInfo: {
-        name: guildInfo.name,
-        memberCount: guildInfo.approximate_member_count,
-        icon: guildInfo.icon 
-          ? `https://cdn.discordapp.com/icons/${guildInfo.id}/${guildInfo.icon}.png`
+        name: inviteResponse.guild.name,
+        memberCount: inviteResponse.guild.approximate_member_count,
+        icon: inviteResponse.guild.icon 
+          ? `https://cdn.discordapp.com/icons/${inviteResponse.guild.id}/${inviteResponse.guild.icon}.png`
           : null
       }
     };
@@ -101,30 +89,25 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
   }
 }
 
-// Lookup user by username (authenticated request)
-export async function lookupUser(username: string): Promise<DiscordUser | null> {
+// Lookup user by ID (authenticated request)
+export async function lookupUser(userId: string): Promise<DiscordUser | null> {
   try {
-    const response = await makeAuthenticatedRequest<any[]>(`/users/@me/relationships`, {
+    const user = await makeAuthenticatedRequest<any>(`/users/${userId}`, {
       method: 'GET',
     });
 
-    // Find user by username
-    const user = response.find((u) => u.user.username === username);
-    if (!user) return null;
-
-    // Format the response
     return {
-      id: user.user.id,
-      username: user.user.username,
-      avatar: user.user.avatar
-        ? `https://cdn.discordapp.com/avatars/${user.user.id}/${user.user.avatar}.png`
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar
+        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
         : null,
-      banner: user.user.banner
-        ? `https://cdn.discordapp.com/banners/${user.user.id}/${user.user.banner}.png`
+      banner: user.banner
+        ? `https://cdn.discordapp.com/banners/${user.id}/${user.banner}.png`
         : null,
       badges: [], // You'll need to implement badge logic based on user flags
-      createdAt: new Date(Number(BigInt(user.user.id) >> 22n) + 1420070400000),
-      accentColor: user.user.accent_color || undefined,
+      createdAt: new Date(Number(BigInt(user.id) >> 22n) + 1420070400000),
+      accentColor: user.accent_color || undefined,
     };
   } catch (error) {
     console.error('Error looking up user:', error);
