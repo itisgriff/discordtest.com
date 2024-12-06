@@ -73,25 +73,33 @@ server {
 
         # Discord API proxy
         location /api/discord/ {
-            proxy_pass https://discord.com/api/v10/;
+            rewrite ^/api/discord/(.*) /api/v10/$1 break;
+            proxy_pass https://discord.com;
+            proxy_http_version 1.1;
             proxy_set_header Host discord.com;
-            proxy_set_header Authorization $http_authorization;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
 
-            # CORS headers for Discord API
+            # Forward the Authorization header
+            proxy_set_header Authorization $http_authorization;
+            
+            # Remove CORS headers from Discord's response
+            proxy_hide_header 'Access-Control-Allow-Origin';
+            proxy_hide_header 'Access-Control-Allow-Methods';
+            proxy_hide_header 'Access-Control-Allow-Headers';
+            
+            # Add our own CORS headers
             add_header 'Access-Control-Allow-Origin' 'https://discordtest.com' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-
-            # Handle preflight
+            
+            # Handle preflight requests
             if ($request_method = 'OPTIONS') {
                 add_header 'Access-Control-Allow-Origin' 'https://discordtest.com' always;
                 add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
                 add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type' always;
-                add_header 'Access-Control-Allow-Credentials' 'true' always;
                 add_header 'Access-Control-Max-Age' 1728000;
                 add_header 'Content-Type' 'text/plain charset=UTF-8';
                 add_header 'Content-Length' 0;

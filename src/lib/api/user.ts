@@ -17,7 +17,9 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
       headers: {
         'Authorization': `Bot ${token}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      mode: 'cors',
     });
 
     if (response.status === 200) {
