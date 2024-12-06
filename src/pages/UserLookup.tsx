@@ -10,19 +10,24 @@ import { toast } from '@/components/ui/toast';
 import type { DiscordUser } from '@/types/discord';
 
 export function UserLookup() {
-  const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState('');
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
+    if (!userId.match(/^\d+$/)) {
+      toast.error("Please enter a valid Discord user ID (numbers only)");
+      return;
+    }
+
     setLoading(true);
     setUser(null);
     try {
-      const result = await lookupUser(username);
+      const result = await lookupUser(userId);
       if (result) {
         setUser(result);
       } else {
-        toast.error("User not found. Please check the username and try again.");
+        toast.error("User not found. Please check the ID and try again.");
       }
     } catch (error) {
       toast.error("Failed to lookup user. Please try again.");
@@ -40,21 +45,21 @@ export function UserLookup() {
           </span>
         </h1>
         <p className="mb-8 text-muted-foreground">
-          Look up Discord user information by username.
+          Look up Discord user information by user ID.
         </p>
       </div>
 
       <Card className="p-6 border-accent/20 shadow-lg shadow-accent/10">
         <div className="flex gap-4">
           <Input
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Enter user ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
             className="flex-1 bg-background/50"
           />
           <Button 
             onClick={handleSearch} 
-            disabled={loading || !username}
+            disabled={loading || !userId}
             className="bg-accent hover:bg-accent/90"
           >
             <Search className="mr-2 h-4 w-4" />
