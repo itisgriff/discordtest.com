@@ -1,5 +1,19 @@
 import { useEffect, useRef } from 'react';
 
+declare global {
+  interface Window {
+    turnstile: {
+      render: (element: HTMLElement, options: {
+        sitekey: string;
+        callback: (token: string) => void;
+        execution?: 'render' | 'execute';
+        'refresh-expired'?: 'auto' | 'manual';
+      }) => string;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
 interface TurnstileProps {
   siteKey: string;
   onVerify: (token: string) => void;
