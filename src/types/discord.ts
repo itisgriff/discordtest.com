@@ -1,7 +1,8 @@
 export interface GuildInfo {
   name: string;
-  memberCount: number;
+  memberCount?: number;
   icon: string | null;
+  inviteCode?: string;
 }
 
 export interface VanityUrlResponse {
