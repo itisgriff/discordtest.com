@@ -1,7 +1,7 @@
 import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
 
-const DISCORD_API_BASE = 'https://discord.com/api/v10';
+const API_BASE = '/api/discord';
 
 // Lookup user by ID
 export async function lookupUser(userId: string): Promise<DiscordUser | null> {
@@ -12,9 +12,11 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
   }
 
   try {
-    const response = await fetch(`${DISCORD_API_BASE}/users/${userId}`, {
+    const response = await fetch(`${API_BASE}/users/${userId}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bot ${token}`,
+        'Content-Type': 'application/json',
       },
     });
 
