@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 
@@ -5,7 +6,8 @@ interface PageLayoutProps {
   children: React.ReactNode;
 }
 
-export function PageLayout({ children }: PageLayoutProps) {
+// Memoize the layout wrapper to prevent unnecessary re-renders
+const LayoutWrapper = memo(function LayoutWrapper({ children }: PageLayoutProps) {
   return (
     <div className="relative min-h-screen bg-background flex flex-col">
       <Header />
@@ -17,4 +19,9 @@ export function PageLayout({ children }: PageLayoutProps) {
       <Footer />
     </div>
   );
+});
+
+// Export a non-memoized version for flexibility
+export function PageLayout({ children }: PageLayoutProps) {
+  return <LayoutWrapper>{children}</LayoutWrapper>;
 }

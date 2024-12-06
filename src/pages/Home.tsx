@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Command, Search, Layout } from 'lucide-react';
+import { Command, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MetaTags } from '@/components/layout/MetaTags';
@@ -50,7 +50,7 @@ export function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
           <FeatureCard
             icon={<Command className="w-6 h-6" />}
             title="Vanity URL Checker"
@@ -64,13 +64,6 @@ export function Home() {
             description="Quickly verify Discord users and access detailed profile information. Perfect for moderation and community management."
             to="/lookup"
             ctaText="Search Users"
-          />
-          <FeatureCard
-            icon={<Layout className="w-6 h-6" />}
-            title="Usage Statistics"
-            description="Track how our Discord management tools are being used by the community. View detailed usage statistics and trends."
-            to="/stats"
-            ctaText="View Stats"
           />
         </div>
       </div>

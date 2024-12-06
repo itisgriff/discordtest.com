@@ -3,7 +3,7 @@ import { Toaster as SonnerToaster } from 'sonner';
 export function Toaster() {
   return (
     <SonnerToaster 
-      position="bottom-center"
+      position="top-center"
       toastOptions={{
         duration: 3000,
         className: 'notification-toast border border-border bg-background text-foreground',
