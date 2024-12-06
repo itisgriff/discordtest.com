@@ -46,7 +46,26 @@ if [ -f "$DEPLOY_DIR/.env" ]; then
   echo "Copying existing .env from deployment directory..."
   cp "$DEPLOY_DIR/.env" .
 else
-  echo "Error: No .env file found in $DEPLOY_DIR"
+  echo "Creating new .env file..."
+  mkdir -p $DEPLOY_DIR
+  cat > "$DEPLOY_DIR/.env" << EOL
+# Discord Bot Token
+DISCORD_BOT_TOKEN=MTI0ODMzMzU4NDIwNTQ4MDA5OA.GKoqXM.MKK-Qgp_xIYcv-GO6iqnEh_fSpSzPm6Q0_wPfI
+
+# Cloudflare Turnstile Keys
+VITE_TURNSTILE_SITE_KEY=0x4AAAAAAA1qZt-MiCPVwWW7
+TURNSTILE_SECRET_KEY=0x4AAAAAAA1qZqBWeQUtpbqqI5f9Ii3ou4Q
+
+# GitHub Token (Required for deployment)
+GITHUB_TOKEN=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
+
+# Node Environment (Optional, defaults to development)
+NODE_ENV=production
+
+# Server Port (Optional, defaults to 3000)
+PORT=3000
+EOL
+  echo "Please edit $DEPLOY_DIR/.env with your actual values and run this script again."
   exit 1
 fi
 
@@ -54,18 +73,19 @@ fi
 echo "Loading environment variables..."
 export $(cat .env | grep -v '^#' | xargs)
 
-# Install all dependencies (including dev dependencies) for building
-echo "Installing dependencies..."
-$NPM_PATH install
-
-# Install build dependencies
+# Install build dependencies first
 echo "Installing build dependencies..."
 $NPM_PATH install -g typescript
-$NPM_PATH install --save-dev @vitejs/plugin-react vite@latest
+$NPM_PATH install --save-dev @vitejs/plugin-react@latest vite@latest
+
+# Clean install all dependencies
+echo "Installing project dependencies..."
+$NPM_PATH ci
 
 # Build frontend
 echo "Building frontend..."
-$NPM_PATH exec tsc -b && $NPM_PATH exec vite build
+export NODE_ENV=production
+$NPM_PATH exec tsc -b && NODE_ENV=production $NPM_PATH exec vite build
 
 # Prepare server files
 echo "Setting up server..."
