@@ -25,12 +25,6 @@ echo "Starting deployment..."
 DEPLOY_DIR="/var/www/discordtest.com"
 TEMP_DIR="/tmp/discordtest-deploy"
 
-# Ensure PM2 is installed globally
-if ! command -v pm2 >/dev/null 2>&1; then
-  echo "Installing PM2 globally..."
-  $NPM_PATH install -g pm2
-fi
-
 # Create temporary directory for build process
 echo "Creating temporary build directory..."
 rm -rf $TEMP_DIR
@@ -73,26 +67,19 @@ fi
 echo "Loading environment variables..."
 export $(cat .env | grep -v '^#' | xargs)
 
-# Install build dependencies first
-echo "Installing build dependencies..."
-$NPM_PATH install -g typescript
-$NPM_PATH install --save-dev @vitejs/plugin-react@latest vite@latest
-
-# Clean install all dependencies
-echo "Installing project dependencies..."
-$NPM_PATH ci
-
-# Build frontend
-echo "Building frontend..."
-export NODE_ENV=production
-$NPM_PATH exec tsc -b && NODE_ENV=production $NPM_PATH exec vite build
+# Check if dist directory exists
+if [ ! -d "dist" ]; then
+  echo "Error: dist directory not found. Please build the frontend locally first."
+  echo "Run 'npm install && npm run build' on your development machine before deploying."
+  exit 1
+fi
 
 # Prepare server files
 echo "Setting up server..."
 mkdir -p $DEPLOY_DIR/server
 cp -r server/* $DEPLOY_DIR/server/
 
-# Clean install production dependencies for server
+# Install production dependencies for server
 echo "Installing server dependencies..."
 cd $DEPLOY_DIR
 rm -rf node_modules
@@ -108,6 +95,12 @@ cp -r $TEMP_DIR/dist/* $DEPLOY_DIR/
 echo "Setting permissions..."
 chown -R www-data:www-data $DEPLOY_DIR
 chmod -R 750 $DEPLOY_DIR
+
+# Ensure PM2 is installed globally
+if ! command -v pm2 >/dev/null 2>&1; then
+  echo "Installing PM2 globally..."
+  $NPM_PATH install -g pm2
+fi
 
 # Start/Restart PM2 process
 echo "Starting server..."
