@@ -47,9 +47,9 @@ export function Home() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
         <FeatureCard
           icon={<Command className="w-6 h-6" />}
-          title="Vanity URL Generator"
-          description="Create custom, memorable URLs for your Discord server. Stand out with a unique server address that reflects your brand."
-          to="/"
+          title="Vanity URL Checker"
+          description="Check availability of custom, memorable URLs for your Discord server. Find the perfect vanity URL for your community."
+          to="/vanity"
           ctaText="Check Availability"
         />
         <FeatureCard

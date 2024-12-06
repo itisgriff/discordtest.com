@@ -3,7 +3,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Home } from '@/pages/Home';
 import { VanityCheck } from '@/pages/VanityCheck';
 import { UserLookup } from '@/pages/UserLookup';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui/toast';
 
 function App() {
   return (
