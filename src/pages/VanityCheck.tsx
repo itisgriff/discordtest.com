@@ -13,7 +13,7 @@ export default function VanityCheck() {
   const [loading, setLoading] = useState(false);
   const [guildInfo, setGuildInfo] = useState<GuildInfo | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string>('');
-  const [needsVerification, setNeedsVerification] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   const handleCheck = useCallback(async () => {
     if (!code) {
@@ -21,7 +21,7 @@ export default function VanityCheck() {
       return;
     }
 
-    if (needsVerification && !turnstileToken) {
+    if (showVerification && !turnstileToken) {
       toast.error("Please complete the verification challenge");
       return;
     }
@@ -33,22 +33,24 @@ export default function VanityCheck() {
       if (result.error) {
         toast.error(result.error);
         if (result.error.includes('verification') || result.error.includes('Too many requests')) {
-          setNeedsVerification(true);
+          setShowVerification(true);
         }
       } else if (result.available) {
         toast.success('This vanity URL is available!');
         setGuildInfo(null);
+        setShowVerification(false);
       } else if (result.guildInfo) {
         setGuildInfo(result.guildInfo);
+        setShowVerification(false);
       }
     } catch (error) {
       console.error('API Error:', error);
       toast.error('Failed to check vanity URL');
-      setNeedsVerification(true);
+      setShowVerification(true);
     } finally {
       setLoading(false);
     }
-  }, [code, turnstileToken, needsVerification]);
+  }, [code, turnstileToken, showVerification]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !loading) {
@@ -73,7 +75,7 @@ export default function VanityCheck() {
         </p>
 
         <Card className="p-6">
-          <div className="flex flex-col gap-4">
+          <div className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Enter vanity URL"
@@ -81,28 +83,33 @@ export default function VanityCheck() {
                 onChange={(e) => setCode(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={loading}
+                className="flex-1"
               />
               <Button 
                 onClick={handleCheck}
-                disabled={loading || !code || (needsVerification && !turnstileToken)}
-                className="bg-accent hover:bg-accent/90"
+                disabled={loading || !code || (showVerification && !turnstileToken)}
+                className="bg-accent hover:bg-accent/90 min-w-[100px]"
                 aria-label={loading ? "Checking..." : "Check availability"}
               >
                 {loading ? "Checking..." : "Check"}
               </Button>
             </div>
 
-            {needsVerification && (
-              <div className="flex justify-center">
+            {showVerification && (
+              <div className="flex flex-col items-center gap-2 p-4 bg-accent/5 rounded-lg border border-accent/10">
+                <p className="text-sm text-muted-foreground mb-2">Please verify that you're human:</p>
                 <Turnstile
                   siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                  onVerify={setTurnstileToken}
+                  onVerify={(token) => {
+                    setTurnstileToken(token);
+                    handleCheck();
+                  }}
                 />
               </div>
             )}
 
             {guildInfo && (
-              <div className="mt-4 p-4 bg-card rounded-lg border flex items-center gap-4">
+              <div className="flex items-center gap-4 p-4 bg-card rounded-lg border animate-in fade-in-50">
                 {guildInfo.icon && (
                   <img 
                     src={guildInfo.icon} 
@@ -120,7 +127,7 @@ export default function VanityCheck() {
                   href={`https://discord.gg/${guildInfo.inviteCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
                 >
                   Join Server
                 </a>
