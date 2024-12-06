@@ -1,17 +1,23 @@
+export interface GuildInfo {
+  name: string;
+  memberCount: number;
+  icon: string | null;
+}
+
+export interface VanityUrlResponse {
+  available: boolean;
+  error: string | null;
+  guildInfo: GuildInfo | null;
+}
+
 export interface DiscordUser {
   id: string;
   username: string;
   avatar: string | null;
   banner: string | null;
-  accentColor: number | null;
-  createdAt: Date;
   badges: string[];
-}
-
-export interface VanityUrlResponse {
-  code: string;
-  available: boolean;
-  error?: string;
+  createdAt: Date;
+  accentColor?: number;
 }
 
 export interface ApiError {

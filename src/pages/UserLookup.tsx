@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { lookupUser } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast';
 import type { DiscordUser } from '@/types/discord';
 
 export function UserLookup() {
   const [username, setUsername] = useState('');
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleSearch = async () => {
     setLoading(true);
@@ -23,33 +22,27 @@ export function UserLookup() {
       if (result) {
         setUser(result);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Not Found",
-          description: "User not found. Please check the username and try again.",
-        });
+        toast.error("User not found. Please check the username and try again.");
       }
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch user data. Please try again.",
-      });
+    } catch (error) {
+      toast.error("Failed to lookup user. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4">
-      <h1 className="mb-6 text-4xl font-bold tracking-tight">
-        <span className="bg-gradient-to-r from-accent to-indigo-500 bg-clip-text text-transparent">
-          Discord User Lookup
-        </span>
-      </h1>
-      <p className="mb-8 text-muted-foreground">
-        Look up Discord user information by username.
-      </p>
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="text-center">
+        <h1 className="mb-6 text-4xl font-bold tracking-tight">
+          <span className="bg-gradient-to-r from-accent to-indigo-500 bg-clip-text text-transparent">
+            Discord User Lookup
+          </span>
+        </h1>
+        <p className="mb-8 text-muted-foreground">
+          Look up Discord user information by username.
+        </p>
+      </div>
 
       <Card className="p-6 border-accent/20 shadow-lg shadow-accent/10">
         <div className="flex gap-4">
@@ -71,7 +64,7 @@ export function UserLookup() {
 
         {user && (
           <div className="mt-6 space-y-6">
-            <div className="flex items-start gap-6">
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
               {user.avatar && (
                 <img
                   src={user.avatar}
@@ -79,10 +72,10 @@ export function UserLookup() {
                   className="h-24 w-24 rounded-full"
                 />
               )}
-              <div>
+              <div className="text-center sm:text-left">
                 <h2 className="text-2xl font-bold">{user.username}</h2>
                 <p className="text-sm text-muted-foreground">ID: {user.id}</p>
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
                   {user.badges.map((badge) => (
                     <Badge key={badge} variant="secondary">
                       {badge}
@@ -102,7 +95,7 @@ export function UserLookup() {
               </div>
             )}
 
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
               Account created: {format(user.createdAt, 'PPP')}
             </div>
           </div>
