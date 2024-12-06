@@ -1,4 +1,4 @@
-import { DiscordUser, VanityUrlResponse, ApiError } from '@/types/discord';
+import { DiscordUser, VanityUrlResponse } from '@/types/discord';
 
 const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
