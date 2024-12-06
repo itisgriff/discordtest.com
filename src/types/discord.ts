@@ -5,20 +5,34 @@ export interface GuildInfo {
   inviteCode?: string;
 }
 
-export interface VanityUrlResponse {
-  available: boolean;
-  error: string | null;
-  guildInfo: GuildInfo | null;
+export interface ClanInfo {
+  identity_guild_id: string | null;
+  identity_enabled: boolean;
+  tag: string | null;
+  badge: string | null;
 }
 
 export interface DiscordUser {
   id: string;
   username: string;
   avatar: string | null;
+  discriminator: string;
+  public_flags: number;
+  flags: number;
   banner: string | null;
-  badges: string[];
+  accent_color: number | null;
+  global_name: string | null;
+  avatar_decoration_data: any | null;
+  banner_color: string | null;
+  clan: ClanInfo;
+  primary_guild: ClanInfo;
   createdAt: Date;
-  accentColor?: number;
+}
+
+export interface VanityUrlResponse {
+  available: boolean;
+  error: string | null;
+  guildInfo: GuildInfo | null;
 }
 
 export interface ApiError {
