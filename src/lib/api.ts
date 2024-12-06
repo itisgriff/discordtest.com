@@ -4,6 +4,9 @@ const DISCORD_API_BASE = 'https://discord.com/api/v10';
 
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {
+  if (response.status === 403) {
+    throw new Error('Access forbidden. Please check bot permissions.');
+  }
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.message || 'An error occurred');
@@ -13,7 +16,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 // Helper function to make unauthenticated requests
 async function makePublicRequest<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${DISCORD_API_BASE}${endpoint}`);
+  const response = await fetch(`${DISCORD_API_BASE}${endpoint}`, {
+    mode: 'cors',
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
   return handleResponse<T>(response);
 }
 
@@ -25,10 +33,13 @@ async function makeAuthenticatedRequest<T>(
   const headers = new Headers(options.headers);
   headers.set('Authorization', `Bot ${import.meta.env.DISCORD_BOT_TOKEN}`);
   headers.set('Content-Type', 'application/json');
+  headers.set('Accept', 'application/json');
 
   const response = await fetch(`${DISCORD_API_BASE}${endpoint}`, {
     ...options,
+    mode: 'cors',
     headers,
+    credentials: 'include'
   });
 
   return handleResponse<T>(response);
