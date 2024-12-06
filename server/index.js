@@ -195,6 +195,10 @@ app.use((err, req, res, next) => {
 });
 
 // Health check endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'ok', message: 'API proxy is working' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
