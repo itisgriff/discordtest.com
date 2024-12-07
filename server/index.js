@@ -104,6 +104,7 @@ app.post('/api/vanity/:code', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('Discord API response:', JSON.stringify(data, null, 2));
 
     if (response.status === 404) {
       return res.json({ available: true });
@@ -117,29 +118,13 @@ app.post('/api/vanity/:code', async (req, res) => {
       return res.status(500).json({ error: 'Invalid response from Discord API' });
     }
 
-    console.log('Discord API response:', JSON.stringify(data, null, 2));
-
     return res.json({
       available: false,
       guild: {
-        id: data.guild.id,
-        name: data.guild.name,
-        icon: data.guild.icon,
-        splash: data.guild.splash,
-        banner: data.guild.banner,
-        description: data.guild.description,
-        features: data.guild.features,
-        verification_level: data.guild.verification_level,
-        nsfw_level: data.guild.nsfw_level,
-        nsfw: data.guild.nsfw,
-        premium_subscription_count: data.guild.premium_subscription_count,
+        ...data.guild,
         approximate_member_count: data.approximate_member_count,
         approximate_presence_count: data.approximate_presence_count,
-        channel: data.channel ? {
-          id: data.channel.id,
-          name: data.channel.name,
-          type: data.channel.type
-        } : null
+        channel: data.channel
       }
     });
   } catch (error) {
