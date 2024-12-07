@@ -27,6 +27,8 @@ export interface DiscordUser {
   clan: ClanInfo;
   primary_guild: ClanInfo;
   createdAt: Date;
+  bot?: boolean;
+  verified?: boolean;
 }
 
 export interface VanityUrlResponse {

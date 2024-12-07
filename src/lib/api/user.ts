@@ -59,10 +59,10 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
     return {
       ...data,
       avatar: data.avatar 
-        ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
+        ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.${data.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`
         : null,
       banner: data.banner
-        ? `https://cdn.discordapp.com/banners/${data.id}/${data.banner}.png`
+        ? `https://cdn.discordapp.com/banners/${data.id}/${data.banner}.png?size=600`
         : null,
       createdAt: new Date(Number(BigInt(data.id) >> 22n) + 1420070400000),
     };
