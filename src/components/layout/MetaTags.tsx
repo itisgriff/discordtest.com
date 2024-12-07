@@ -1,7 +1,7 @@
 import { memo } from 'react';
 
-const BASE_TITLE = 'DiscordTest';
-const BASE_DESCRIPTION = 'Powerful utilities to enhance your Discord server management experience.';
+const BASE_TITLE = 'DiscordTest - Discord Server Management & Utility Tools';
+const BASE_DESCRIPTION = 'Check Discord vanity URLs and lookup user information with our powerful server management tools. Fast, reliable, and easy-to-use utilities for Discord admins.';
 const BASE_URL = 'https://discordtest.com';
 
 interface MetaTagsProps {

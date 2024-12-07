@@ -36,9 +36,9 @@ export function Home() {
     <>
       <MetaTags 
         title="Home"
-        description="Access powerful Discord management tools including vanity URL checker and user lookup."
+        path="/"
       />
-      <div className="container px-4 py-16 mx-auto">
+      <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h1 className="text-5xl font-bold tracking-tight mb-6">
             <span className="bg-gradient-to-r from-accent to-indigo-500 bg-clip-text text-transparent">

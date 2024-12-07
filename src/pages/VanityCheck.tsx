@@ -54,6 +54,7 @@ export default function VanityCheck() {
       <MetaTags 
         title="Vanity URL Checker"
         description="Check if your desired vanity URL is available for your Discord server."
+        path="/vanity"
       />
       
       <div className="container max-w-2xl mx-auto px-4 py-8">
