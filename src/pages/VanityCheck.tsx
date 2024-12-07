@@ -11,6 +11,7 @@ export default function VanityCheck() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [guildInfo, setGuildInfo] = useState<GuildInfo | null>(null);
+  const [isAvailable, setIsAvailable] = useState(false);
 
   const handleCheck = useCallback(async () => {
     if (!code) {
@@ -19,20 +20,19 @@ export default function VanityCheck() {
     }
 
     setLoading(true);
+    setIsAvailable(false);
     try {
       const result = await checkVanityUrl(code);
       
-      if (result.error) {
-        if (result.available) {
-          toast.success(result.error);
-        } else {
-          toast.error(result.error);
-        }
+      if (result.error && !result.available) {
+        toast.error(result.error);
       }
       
       if (result.available) {
+        setIsAvailable(true);
         setGuildInfo(null);
       } else if (result.guildInfo) {
+        setIsAvailable(false);
         setGuildInfo(result.guildInfo);
       }
     } catch (error) {
@@ -85,6 +85,26 @@ export default function VanityCheck() {
                 {loading ? "Checking..." : "Check"}
               </Button>
             </div>
+
+            {isAvailable && (
+              <div className="flex items-center gap-4 p-4 bg-card rounded-lg border border-green-500/20 bg-green-500/10 animate-in fade-in-50">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-500">Available!</h3>
+                  <p className="text-sm text-muted-foreground">
+                    The vanity URL "discord.gg/{code}" is available for your server.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(code);
+                    toast.success('Copied to clipboard!');
+                  }}
+                  className="bg-green-500 hover:bg-green-600 min-w-[120px]"
+                >
+                  Copy URL
+                </Button>
+              </div>
+            )}
 
             {guildInfo && (
               <div className="flex items-center gap-4 p-4 bg-card rounded-lg border animate-in fade-in-50">
