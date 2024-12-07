@@ -23,9 +23,14 @@ export default function VanityCheck() {
       const result = await checkVanityUrl(code);
       
       if (result.error) {
-        toast.error(result.error);
-      } else if (result.available) {
-        toast.success('This vanity URL is available!');
+        if (result.available) {
+          toast.success(result.error);
+        } else {
+          toast.error(result.error);
+        }
+      }
+      
+      if (result.available) {
         setGuildInfo(null);
       } else if (result.guildInfo) {
         setGuildInfo(result.guildInfo);
@@ -74,7 +79,7 @@ export default function VanityCheck() {
               <Button 
                 onClick={handleCheck}
                 disabled={loading || !code}
-                className="bg-accent hover:bg-accent/90 min-w-[100px]"
+                className="bg-accent hover:bg-accent/90 min-w-[120px]"
                 aria-label={loading ? "Checking..." : "Check availability"}
               >
                 {loading ? "Checking..." : "Check"}
@@ -96,14 +101,18 @@ export default function VanityCheck() {
                     {(guildInfo.memberCount ?? 0).toLocaleString()} members
                   </p>
                 </div>
-                <a
-                  href={`https://discord.gg/${guildInfo.inviteCode}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
+                <Button
+                  asChild
+                  className="bg-accent hover:bg-accent/90 min-w-[120px]"
                 >
-                  Join Server
-                </a>
+                  <a
+                    href={`https://discord.gg/${guildInfo.inviteCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join Server
+                  </a>
+                </Button>
               </div>
             )}
           </div>
