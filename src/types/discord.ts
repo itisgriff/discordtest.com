@@ -1,8 +1,9 @@
 export interface GuildInfo {
   name: string;
-  memberCount?: number;
+  memberCount: number;
+  onlineCount: number;
   icon: string | null;
-  inviteCode?: string;
+  inviteCode: string;
 }
 
 export interface ClanInfo {

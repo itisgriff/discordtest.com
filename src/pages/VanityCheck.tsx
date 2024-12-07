@@ -91,7 +91,7 @@ export default function VanityCheck() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-green-500">Available!</h3>
                   <p className="text-sm text-muted-foreground">
-                    The vanity URL "discord.gg/{code}" is available for your server.
+                    The vanity URL "discord.com/invite/{code}" is available for your server.
                   </p>
                 </div>
                 <Button
@@ -118,7 +118,7 @@ export default function VanityCheck() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {(guildInfo.memberCount ?? 0).toLocaleString()} members
+                    {guildInfo.onlineCount.toLocaleString()} Online · {guildInfo.memberCount.toLocaleString()} Members
                   </p>
                 </div>
                 <Button
@@ -126,7 +126,7 @@ export default function VanityCheck() {
                   className="bg-accent hover:bg-accent/90 min-w-[120px]"
                 >
                   <a
-                    href={`https://discord.gg/${guildInfo.inviteCode}`}
+                    href={`https://discord.com/invite/${guildInfo.inviteCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
