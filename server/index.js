@@ -117,6 +117,8 @@ app.post('/api/vanity/:code', async (req, res) => {
       return res.status(500).json({ error: 'Invalid response from Discord API' });
     }
 
+    console.log('Discord API response:', JSON.stringify(data, null, 2));
+
     return res.json({
       available: false,
       guild: {
