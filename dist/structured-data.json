@@ -1,0 +1,19 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DiscordTest",
+  "description": "Powerful utilities to enhance your Discord server management experience.",
+  "url": "https://discordtest.com",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": [
+    "Discord Vanity URL Checker",
+    "Discord User Lookup",
+    "Server Information"
+  ]
+} 

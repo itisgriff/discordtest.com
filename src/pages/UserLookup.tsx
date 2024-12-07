@@ -54,6 +54,7 @@ export default function UserLookup() {
       <MetaTags 
         title="User Lookup"
         description="Look up Discord user information using their ID."
+        path="/lookup"
       />
       
       <div className="container max-w-2xl mx-auto px-4 py-8">
