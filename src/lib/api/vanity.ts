@@ -49,7 +49,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     }
 
     const data = await response.json();
-    console.log('API Response:', data);
     
     if (data.available) {
       return {
@@ -66,9 +65,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
         guildInfo: null
       };
     }
-
-    console.log('Member Count:', data.guild.approximate_member_count);
-    console.log('Online Count:', data.guild.approximate_presence_count);
 
     return {
       available: false,
