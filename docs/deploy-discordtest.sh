@@ -84,7 +84,7 @@ cp .env $DEPLOY_DIR/server/
 echo "Installing server dependencies..."
 cd $DEPLOY_DIR/server
 rm -rf node_modules
-$NPM_PATH install --production
+$NPM_PATH install --omit=dev
 
 # Copy built frontend files
 echo "Copying frontend files..."
@@ -110,9 +110,13 @@ sudo -u www-data pm2 delete discord-api 2>/dev/null || true
 # Start server with PM2
 echo "Starting server..."
 cd $DEPLOY_DIR/server
-sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 start index.js --name discord-api"
-sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 save"
-sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin HOME=/var/www pm2 startup"
+NODE_PATH=/home/ubuntu/.nvm/versions/node/v23.3.0/lib/node_modules \
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin NODE_ENV=production pm2 start index.js --name discord-api --update-env"
+
+# Setup PM2 startup
+echo "Setting up PM2 startup..."
+sudo env PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin pm2 startup systemd -u www-data --hp /var/www
+sudo -u www-data bash -c "PATH=$PATH:/home/ubuntu/.nvm/versions/node/v23.3.0/bin pm2 save"
 
 # Clean up temporary files
 echo "Cleaning up..."
