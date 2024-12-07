@@ -70,13 +70,31 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       available: false,
       error: null,
       guildInfo: {
+        id: data.guild.id,
         name: data.guild.name,
-        memberCount: data.guild.approximate_member_count,
-        onlineCount: data.guild.approximate_presence_count,
+        memberCount: data.approximate_member_count,
+        onlineCount: data.approximate_presence_count,
         icon: data.guild.icon 
           ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`
           : null,
-        inviteCode: code
+        splash: data.guild.splash
+          ? `https://cdn.discordapp.com/splashes/${data.guild.id}/${data.guild.splash}.png?size=1024`
+          : null,
+        banner: data.guild.banner
+          ? `https://cdn.discordapp.com/banners/${data.guild.id}/${data.guild.banner}.png?size=1024`
+          : null,
+        description: data.guild.description,
+        features: data.guild.features || [],
+        verificationLevel: data.guild.verification_level,
+        nsfwLevel: data.guild.nsfw_level,
+        isNsfw: data.guild.nsfw || false,
+        boostCount: data.guild.premium_subscription_count || 0,
+        inviteCode: code,
+        inviteChannel: data.channel ? {
+          id: data.channel.id,
+          name: data.channel.name,
+          type: data.channel.type
+        } : undefined
       }
     };
   } catch (error) {

@@ -1,9 +1,23 @@
 export interface GuildInfo {
+  id: string;
   name: string;
   memberCount: number;
   onlineCount: number;
   icon: string | null;
+  splash: string | null;
+  banner: string | null;
+  description: string | null;
+  features: string[];
+  verificationLevel: number;
+  nsfwLevel: number;
+  isNsfw: boolean;
+  boostCount: number;
   inviteCode: string;
+  inviteChannel?: {
+    id: string;
+    name: string;
+    type: number;
+  };
 }
 
 export interface ClanInfo {

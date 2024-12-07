@@ -123,8 +123,21 @@ app.post('/api/vanity/:code', async (req, res) => {
         id: data.guild.id,
         name: data.guild.name,
         icon: data.guild.icon,
-        approximate_member_count: data.approximate_member_count || 0,
-        approximate_presence_count: data.approximate_presence_count || 0
+        splash: data.guild.splash,
+        banner: data.guild.banner,
+        description: data.guild.description,
+        features: data.guild.features,
+        verification_level: data.guild.verification_level,
+        nsfw_level: data.guild.nsfw_level,
+        nsfw: data.guild.nsfw,
+        premium_subscription_count: data.guild.premium_subscription_count,
+        approximate_member_count: data.approximate_member_count,
+        approximate_presence_count: data.approximate_presence_count,
+        channel: data.channel ? {
+          id: data.channel.id,
+          name: data.channel.name,
+          type: data.channel.type
+        } : null
       }
     });
   } catch (error) {

@@ -117,9 +117,48 @@ export default function VanityCheck() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
+                    </p>
+                    
+                    {guildInfo.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {guildInfo.description}
+                      </p>
+                    )}
+
+                    {guildInfo.boostCount > 0 && (
+                      <p className="text-sm text-purple-400">
+                        {guildInfo.boostCount} Server Boost{guildInfo.boostCount !== 1 ? 's' : ''}
+                      </p>
+                    )}
+
+                    {guildInfo.inviteChannel && (
+                      <p className="text-sm text-muted-foreground">
+                        Invite Channel: #{guildInfo.inviteChannel.name}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-1">
+                      {guildInfo.features.map(feature => (
+                        <span 
+                          key={feature} 
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent/10 text-accent-foreground"
+                        >
+                          {feature.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                        </span>
+                      ))}
+                    </div>
+
+                    {guildInfo.splash && (
+                      <img 
+                        src={guildInfo.splash} 
+                        alt="Server Splash"
+                        className="w-full h-32 object-cover rounded-md mt-2"
+                      />
+                    )}
+                  </div>
                 </div>
                 <Button
                   asChild
