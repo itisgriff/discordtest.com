@@ -67,8 +67,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    console.log('Member Count:', data.approximate_member_count);
-    console.log('Online Count:', data.approximate_presence_count);
+    console.log('Member Count:', data.guild.approximate_member_count);
+    console.log('Online Count:', data.guild.approximate_presence_count);
 
     return {
       available: false,
@@ -76,8 +76,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       guildInfo: {
         id: data.guild.id,
         name: data.guild.name,
-        memberCount: data.approximate_member_count,
-        onlineCount: data.approximate_presence_count,
+        memberCount: data.guild.approximate_member_count,
+        onlineCount: data.guild.approximate_presence_count,
         icon: data.guild.icon 
           ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`
           : null,
