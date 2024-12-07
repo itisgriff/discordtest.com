@@ -51,9 +51,14 @@ export const MetaTags = memo(function MetaTags({
       
       {/* PWA Tags */}
       <link rel="manifest" href="/manifest.json" />
+      <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       <meta name="apple-mobile-web-app-title" content={BASE_TITLE} />
+      
+      {/* Mobile Theme */}
+      <meta name="theme-color" content="#5865F2" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#020817" media="(prefers-color-scheme: dark)" />
     </>
   );
 }); 

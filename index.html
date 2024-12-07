@@ -10,6 +10,16 @@
     <title>DiscordTest - Discord Server Management & Utility Tools</title>
     <link rel="manifest" href="/manifest.json" />
     <script type="application/ld+json" src="/structured-data.json"></script>
+    <!-- Cloudflare Analytics -->
+    <script>
+      // Suppress console errors if analytics is blocked
+      window.addEventListener('error', function(e) {
+        if (e.filename?.includes('cloudflareinsights')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>

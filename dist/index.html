@@ -10,7 +10,17 @@
     <title>DiscordTest - Discord Server Management & Utility Tools</title>
     <link rel="manifest" href="/manifest.json" />
     <script type="application/ld+json" src="/structured-data.json"></script>
-    <script type="module" crossorigin src="/assets/index-M5Hi9szF.js"></script>
+    <!-- Cloudflare Analytics -->
+    <script>
+      // Suppress console errors if analytics is blocked
+      window.addEventListener('error', function(e) {
+        if (e.filename?.includes('cloudflareinsights')) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+    </script>
+    <script type="module" crossorigin src="/assets/index-CvcZhB0B.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BqlmFmW4.css">
   </head>
   <body>
