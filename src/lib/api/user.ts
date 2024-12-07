@@ -59,12 +59,12 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
     return {
       ...data,
       avatar: data.avatar 
-        ? `https://cdn.discordapp.com/avatars/${userId}/${data.avatar}.png?size=256`
+        ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
         : null,
       banner: data.banner
-        ? `https://cdn.discordapp.com/banners/${userId}/${data.banner}.png?size=600`
+        ? `https://cdn.discordapp.com/banners/${data.id}/${data.banner}.png`
         : null,
-      createdAt: new Date(Number(BigInt(userId) >> 22n) + 1420070400000),
+      createdAt: new Date(Number(BigInt(data.id) >> 22n) + 1420070400000),
     };
   } catch (error) {
     console.error('API Error:', error);
