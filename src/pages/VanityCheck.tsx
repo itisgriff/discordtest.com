@@ -118,7 +118,7 @@ export default function VanityCheck() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {guildInfo.onlineCount.toLocaleString()} Online · {guildInfo.memberCount.toLocaleString()} Members
+                    {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
                   </p>
                 </div>
                 <Button

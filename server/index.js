@@ -123,7 +123,8 @@ app.post('/api/vanity/:code', async (req, res) => {
         id: data.guild.id,
         name: data.guild.name,
         icon: data.guild.icon,
-        approximate_member_count: data.approximate_member_count
+        approximate_member_count: data.approximate_member_count || 0,
+        approximate_presence_count: data.approximate_presence_count || 0
       }
     });
   } catch (error) {
