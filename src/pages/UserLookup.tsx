@@ -8,15 +8,12 @@ import { toast } from '@/components/ui/toast';
 import { format } from 'date-fns';
 import { getUserFlags } from '@/lib/utils/userFlags';
 import { MetaTags } from '@/components/layout/MetaTags';
-import { Turnstile } from '@/components/ui/turnstile';
 import type { DiscordUser } from '@/types/discord';
 
 export default function UserLookup() {
   const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string>('');
-  const [showVerification, setShowVerification] = useState(false);
 
   const handleSearch = useCallback(async () => {
     if (!userId) {
@@ -24,38 +21,27 @@ export default function UserLookup() {
       return;
     }
 
-    if (showVerification && !turnstileToken) {
-      toast.error("Please complete the verification challenge");
-      return;
-    }
-
     setLoading(true);
     try {
-      const result = await lookupUser(userId, turnstileToken);
+      const result = await lookupUser(userId);
       
       if (!result) {
         toast.error('Failed to lookup user');
-        setShowVerification(true);
         return;
       }
 
       if ('error' in result && typeof result.error === 'string') {
         toast.error(result.error);
-        if (result.error.includes('verification') || result.error.includes('Too many requests')) {
-          setShowVerification(true);
-        }
       } else {
         setUser(result);
-        setShowVerification(false);
       }
     } catch (error) {
       console.error('API Error:', error);
       toast.error('Failed to lookup user');
-      setShowVerification(true);
     } finally {
       setLoading(false);
     }
-  }, [userId, turnstileToken, showVerification]);
+  }, [userId]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !loading) {
@@ -92,26 +78,13 @@ export default function UserLookup() {
               />
               <Button 
                 onClick={handleSearch}
-                disabled={loading || !userId || (showVerification && !turnstileToken)}
+                disabled={loading || !userId}
                 className="bg-accent hover:bg-accent/90 min-w-[100px]"
                 aria-label={loading ? "Loading..." : "Search"}
               >
                 {loading ? "Loading..." : "Search"}
               </Button>
             </div>
-
-            {showVerification && (
-              <div className="flex flex-col items-center gap-2 p-4 bg-accent/5 rounded-lg border border-accent/10">
-                <p className="text-sm text-muted-foreground mb-2">Please verify that you're human:</p>
-                <Turnstile
-                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                  onVerify={(token) => {
-                    setTurnstileToken(token);
-                    handleSearch();
-                  }}
-                />
-              </div>
-            )}
 
             {user && (
               <div className="flex items-center gap-4 p-4 bg-card rounded-lg border animate-in fade-in-50">

@@ -14,7 +14,7 @@ interface ErrorResponse {
 }
 
 // Lookup user by ID
-export async function lookupUser(userId: string, turnstileToken: string): Promise<DiscordUser | null> {
+export async function lookupUser(userId: string): Promise<DiscordUser | null> {
   try {
     // Input validation
     if (!userId.match(/^\d+$/)) {
@@ -25,7 +25,6 @@ export async function lookupUser(userId: string, turnstileToken: string): Promis
     const response = await fetch(`${API_BASE}/users/${userId}`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
-      body: JSON.stringify({ token: turnstileToken }),
     });
 
     const data = await response.json() as DiscordUser | ErrorResponse;
@@ -35,9 +34,6 @@ export async function lookupUser(userId: string, turnstileToken: string): Promis
         switch (response.status) {
           case 401:
             toast.error('Unauthorized: Check bot permissions');
-            break;
-          case 403:
-            toast.error('Verification failed. Please try again.');
             break;
           case 404:
             toast.error('User not found');

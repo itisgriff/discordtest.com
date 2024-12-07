@@ -5,15 +5,12 @@ import { Card } from '@/components/ui/card';
 import { checkVanityUrl } from '@/lib/api';
 import { toast } from '@/components/ui/toast';
 import { MetaTags } from '@/components/layout/MetaTags';
-import { Turnstile } from '@/components/ui/turnstile';
 import type { GuildInfo } from '@/types/discord';
 
 export default function VanityCheck() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [guildInfo, setGuildInfo] = useState<GuildInfo | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string>('');
-  const [showVerification, setShowVerification] = useState(false);
 
   const handleCheck = useCallback(async () => {
     if (!code) {
@@ -21,36 +18,25 @@ export default function VanityCheck() {
       return;
     }
 
-    if (showVerification && !turnstileToken) {
-      toast.error("Please complete the verification challenge");
-      return;
-    }
-
     setLoading(true);
     try {
-      const result = await checkVanityUrl(code, turnstileToken);
+      const result = await checkVanityUrl(code);
       
       if (result.error) {
         toast.error(result.error);
-        if (result.error.includes('verification') || result.error.includes('Too many requests')) {
-          setShowVerification(true);
-        }
       } else if (result.available) {
         toast.success('This vanity URL is available!');
         setGuildInfo(null);
-        setShowVerification(false);
       } else if (result.guildInfo) {
         setGuildInfo(result.guildInfo);
-        setShowVerification(false);
       }
     } catch (error) {
       console.error('API Error:', error);
       toast.error('Failed to check vanity URL');
-      setShowVerification(true);
     } finally {
       setLoading(false);
     }
-  }, [code, turnstileToken, showVerification]);
+  }, [code]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !loading) {
@@ -87,26 +73,13 @@ export default function VanityCheck() {
               />
               <Button 
                 onClick={handleCheck}
-                disabled={loading || !code || (showVerification && !turnstileToken)}
+                disabled={loading || !code}
                 className="bg-accent hover:bg-accent/90 min-w-[100px]"
                 aria-label={loading ? "Checking..." : "Check availability"}
               >
                 {loading ? "Checking..." : "Check"}
               </Button>
             </div>
-
-            {showVerification && (
-              <div className="flex flex-col items-center gap-2 p-4 bg-accent/5 rounded-lg border border-accent/10">
-                <p className="text-sm text-muted-foreground mb-2">Please verify that you're human:</p>
-                <Turnstile
-                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                  onVerify={(token) => {
-                    setTurnstileToken(token);
-                    handleCheck();
-                  }}
-                />
-              </div>
-            )}
 
             {guildInfo && (
               <div className="flex items-center gap-4 p-4 bg-card rounded-lg border animate-in fade-in-50">

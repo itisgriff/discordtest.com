@@ -24,15 +24,31 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Rate limiting
+// Rate limiting - 30 requests per minute per IP
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // limit each IP to 30 requests per minute
   standardHeaders: true,
   legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' },
   trustProxy: true
 });
+
+// Apply rate limiting to all routes
 app.use(limiter);
+
+// Stricter rate limit for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // limit each IP to 10 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many API requests, please try again later' },
+  trustProxy: true
+});
+
+// Apply stricter rate limit to API endpoints
+app.use('/api/', apiLimiter);
 
 // Cached Discord headers
 const getDiscordHeaders = () => {
@@ -48,68 +64,13 @@ const getDiscordHeaders = () => {
   });
 };
 
-// Verify Turnstile token with caching
-const tokenCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-async function verifyTurnstileToken(token) {
-  // Check cache first
-  const cached = tokenCache.get(token);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.valid;
-  }
-
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        secret: process.env.TURNSTILE_SECRET_KEY,
-        response: token,
-      }),
-    });
-
-    const data = await response.json();
-    
-    // Cache the result
-    tokenCache.set(token, {
-      valid: data.success,
-      timestamp: Date.now()
-    });
-
-    // Cleanup old cache entries
-    if (tokenCache.size > 1000) {
-      const now = Date.now();
-      for (const [key, value] of tokenCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL) {
-          tokenCache.delete(key);
-        }
-      }
-    }
-
-    return data.success;
-  } catch (error) {
-    console.error('Turnstile verification error:', error);
-    return false;
-  }
-}
-
 // Discord API endpoint
 app.post('/api/users/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { token } = req.body;
 
     if (!userId.match(/^\d+$/)) {
       return res.status(400).json({ error: 'Invalid user ID format' });
-    }
-
-    // Verify Turnstile token
-    const isValid = await verifyTurnstileToken(token);
-    if (!isValid) {
-      return res.status(403).json({ error: 'Invalid Turnstile token' });
     }
 
     const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
@@ -133,16 +94,9 @@ app.post('/api/users/:userId', async (req, res) => {
 app.post('/api/vanity/:code', async (req, res) => {
   try {
     const { code } = req.params;
-    const { token } = req.body;
 
     if (!code.match(/^[a-zA-Z0-9-]+$/)) {
       return res.status(400).json({ error: 'Invalid vanity URL format' });
-    }
-
-    // Verify Turnstile token
-    const isValid = await verifyTurnstileToken(token);
-    if (!isValid) {
-      return res.status(403).json({ error: 'Invalid Turnstile token' });
     }
 
     const response = await fetch(`https://discord.com/api/v10/invites/${code}`, {
