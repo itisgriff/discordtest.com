@@ -2,7 +2,7 @@ import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
 
 const API_BASE = import.meta.env.PROD 
-  ? 'https://api.discordtest.com/api'
+  ? '/api'
   : 'http://localhost:3000/api';
 
 const DEFAULT_HEADERS = {

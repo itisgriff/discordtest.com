@@ -53,7 +53,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     if (data.available) {
       return {
         available: true,
-        error: null,
+        error: `The vanity URL "discord.gg/${code}" is available! You can use it for your server.`,
         guildInfo: null
       };
     }
