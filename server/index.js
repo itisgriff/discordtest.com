@@ -99,7 +99,7 @@ app.post('/api/vanity/:code', async (req, res) => {
       return res.status(400).json({ error: 'Invalid vanity URL format' });
     }
 
-    const response = await fetch(`https://discord.com/api/v10/invites/${code}`, {
+    const response = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`, {
       headers: getDiscordHeaders()
     });
 
@@ -130,6 +130,26 @@ app.post('/api/vanity/:code', async (req, res) => {
   } catch (error) {
     console.error('Vanity check error:', error);
     res.status(500).json({ error: 'Failed to check vanity URL' });
+  }
+});
+
+// Test endpoint for invite data
+app.get('/api/test/invite/:code', async (req, res) => {
+  try {
+    const { code } = req.params;
+    console.log(`Testing invite code: ${code}`);
+
+    const response = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`, {
+      headers: getDiscordHeaders()
+    });
+
+    const data = await response.json();
+    console.log('Raw Discord API response:', JSON.stringify(data, null, 2));
+
+    res.json(data);
+  } catch (error) {
+    console.error('Test invite error:', error);
+    res.status(500).json({ error: 'Failed to fetch invite data', details: error.message });
   }
 });
 
