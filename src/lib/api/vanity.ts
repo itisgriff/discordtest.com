@@ -13,7 +13,7 @@ interface ErrorResponse {
 }
 
 // Check vanity URL availability
-export async function checkVanityUrl(code: string, turnstileToken: string): Promise<VanityUrlResponse> {
+export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
   try {
     // Input validation
     if (!code.match(/^[a-zA-Z0-9-]+$/)) {
@@ -27,19 +27,12 @@ export async function checkVanityUrl(code: string, turnstileToken: string): Prom
     const response = await fetch(`${API_BASE}/vanity/${code}`, {
       method: 'POST',
       headers: DEFAULT_HEADERS,
-      body: JSON.stringify({ token: turnstileToken }),
     });
 
     if (!response.ok) {
       const data = await response.json() as ErrorResponse;
       
       switch (response.status) {
-        case 403:
-          return {
-            available: false,
-            error: 'Verification failed. Please try again.',
-            guildInfo: null
-          };
         case 429:
           return {
             available: false,
