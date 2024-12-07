@@ -53,7 +53,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     if (data.available) {
       return {
         available: true,
-        error: `The vanity URL "discord.gg/${code}" is available! You can use it for your server.`,
+        error: `The vanity URL "discord.com/invite/${code}" is available! You can use it for your server.`,
         guildInfo: null
       };
     }
@@ -72,6 +72,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       guildInfo: {
         name: data.guild.name,
         memberCount: data.guild.approximate_member_count,
+        onlineCount: data.guild.approximate_presence_count,
         icon: data.guild.icon 
           ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`
           : null,
