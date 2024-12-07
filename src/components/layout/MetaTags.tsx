@@ -1,68 +1,59 @@
-import { memo, useEffect } from 'react';
-
-interface MetaTagsProps {
-  title: string;
-  description?: string;
-}
+import { memo } from 'react';
 
 const BASE_TITLE = 'DiscordTest';
-const DEFAULT_DESCRIPTION = 'Powerful utilities to enhance your Discord server management experience.';
+const BASE_DESCRIPTION = 'Powerful utilities to enhance your Discord server management experience.';
+const BASE_URL = 'https://discordtest.com';
 
-// Memoized meta tags component to prevent unnecessary updates
+interface MetaTagsProps {
+  title?: string;
+  description?: string;
+  path?: string;
+}
+
 export const MetaTags = memo(function MetaTags({ 
-  title, 
-  description = DEFAULT_DESCRIPTION 
+  title = 'Home',
+  description = BASE_DESCRIPTION,
+  path = ''
 }: MetaTagsProps) {
   const fullTitle = title === 'Home' ? BASE_TITLE : `${title} | ${BASE_TITLE}`;
-
-  useEffect(() => {
-    // Update document title
-    document.title = fullTitle;
-
-    // Update meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', description);
-    }
-
-    // Update Open Graph meta tags
-    updateOpenGraphTags(fullTitle, description);
-
-    // Update Twitter Card meta tags
-    updateTwitterTags(fullTitle, description);
-
-    // Cleanup function to reset title on unmount
-    return () => {
-      document.title = BASE_TITLE;
-    };
-  }, [fullTitle, description]);
-
-  return null;
-});
-
-// Helper functions for updating meta tags
-function updateOpenGraphTags(title: string, description: string) {
-  updateMetaTag('og:title', title);
-  updateMetaTag('og:description', description);
-  updateMetaTag('og:type', 'website');
-  updateMetaTag('og:site_name', BASE_TITLE);
-}
-
-function updateTwitterTags(title: string, description: string) {
-  updateMetaTag('twitter:title', title);
-  updateMetaTag('twitter:description', description);
-  updateMetaTag('twitter:card', 'summary');
-}
-
-function updateMetaTag(name: string, content: string) {
-  let meta = document.querySelector(`meta[property="${name}"]`) ||
-             document.querySelector(`meta[name="${name}"]`);
-             
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute(name.includes(':') ? 'property' : 'name', name);
-    document.head.appendChild(meta);
-  }
+  const canonicalUrl = `${BASE_URL}${path}`;
   
-  meta.setAttribute('content', content);
-} 
+  return (
+    <>
+      {/* Basic Meta Tags */}
+      <title>{fullTitle}</title>
+      <meta name="description" content={description} />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta charSet="UTF-8" />
+      
+      {/* Open Graph / Facebook */}
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:title" content={fullTitle} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={`${BASE_URL}/og-image.png`} />
+      
+      {/* Twitter */}
+      <meta property="twitter:card" content="summary_large_image" />
+      <meta property="twitter:url" content={canonicalUrl} />
+      <meta property="twitter:title" content={fullTitle} />
+      <meta property="twitter:description" content={description} />
+      <meta property="twitter:image" content={`${BASE_URL}/og-image.png`} />
+      
+      {/* Canonical URL */}
+      <link rel="canonical" href={canonicalUrl} />
+      
+      {/* Additional SEO Tags */}
+      <meta name="robots" content="index, follow" />
+      <meta name="theme-color" content="#5865F2" />
+      <meta name="keywords" content="Discord, vanity URL, user lookup, server management, Discord tools, Discord utilities" />
+      <meta name="author" content="DiscordTest" />
+      
+      {/* PWA Tags */}
+      <link rel="manifest" href="/manifest.json" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content={BASE_TITLE} />
+    </>
+  );
+}); 
