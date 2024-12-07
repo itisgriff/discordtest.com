@@ -142,10 +142,25 @@ export default function VanityCheck() {
                       )}
                     </div>
 
-                    {guildInfo.features.length > 0 && (
+                    {(guildInfo.features.length > 0 || guildInfo.verificationLevel > 0 || guildInfo.nsfwLevel > 0) && (
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Features</h4>
                         <div className="flex flex-wrap gap-1">
+                          {guildInfo.verificationLevel > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-500">
+                              Verification Level {guildInfo.verificationLevel}
+                            </span>
+                          )}
+                          {guildInfo.nsfwLevel > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-500">
+                              NSFW Level {guildInfo.nsfwLevel}
+                            </span>
+                          )}
+                          {guildInfo.isNsfw && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-500">
+                              NSFW Server
+                            </span>
+                          )}
                           {guildInfo.features.map(feature => (
                             <span 
                               key={feature} 
