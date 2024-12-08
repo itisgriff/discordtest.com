@@ -99,12 +99,34 @@ app.post('/api/vanity/:code', async (req, res) => {
       return res.status(400).json({ error: 'Invalid vanity URL format' });
     }
 
-    const response = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`, {
-      headers: getDiscordHeaders()
+    const url = `https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`;
+    console.log('Making request to Discord API:', url);
+    
+    const headers = getDiscordHeaders();
+    console.log('Using headers:', {
+      'User-Agent': headers.get('User-Agent'),
+      // Log partial token for debugging (first few chars)
+      'Authorization': headers.get('Authorization').substring(0, 15) + '...'
     });
 
-    const data = await response.json();
-    console.log('Discord API response:', JSON.stringify(data, null, 2));
+    const response = await fetch(url, { headers });
+    
+    // Log the raw response for debugging
+    const rawText = await response.text();
+    console.log('Raw Discord API response:', rawText);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', parseError);
+      return res.status(500).json({ 
+        error: 'Invalid response from Discord API',
+        details: rawText.substring(0, 200) // First 200 chars of response
+      });
+    }
 
     if (response.status === 404) {
       return res.json({ available: true });
