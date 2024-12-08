@@ -5,6 +5,7 @@ import fetch from 'node-fetch';
 import { Headers } from 'node-fetch';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import os from 'os';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -40,7 +41,7 @@ app.use(limiter);
 // Stricter rate limit for API endpoints
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 10, // limit each IP to 10 requests per minute
+  max: 5, // limit each IP to 5 requests per minute for API endpoints
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many API requests, please try again later' },
@@ -49,6 +50,12 @@ const apiLimiter = rateLimit({
 
 // Apply stricter rate limit to API endpoints
 app.use('/api/', apiLimiter);
+
+// Discord rate limit tracking
+const discordRateLimit = {
+  lastRequest: 0,
+  minTimeBetweenRequests: 2000, // 2 seconds between requests
+};
 
 // Cached Discord headers
 const getDiscordHeaders = () => {
@@ -64,31 +71,17 @@ const getDiscordHeaders = () => {
   });
 };
 
-// Discord API endpoint
-app.post('/api/users/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    if (!userId.match(/^\d+$/)) {
-      return res.status(400).json({ error: 'Invalid user ID format' });
-    }
-
-    const response = await fetch(`https://discord.com/api/v10/users/${userId}`, {
-      headers: getDiscordHeaders()
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      return res.status(response.status).json(data);
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('User lookup error:', error);
-    res.status(500).json({ error: 'Failed to fetch user data' });
+// Helper function to enforce minimum time between Discord API requests
+const enforceDiscordRateLimit = async () => {
+  const now = Date.now();
+  const timeToWait = discordRateLimit.lastRequest + discordRateLimit.minTimeBetweenRequests - now;
+  
+  if (timeToWait > 0) {
+    await new Promise(resolve => setTimeout(resolve, timeToWait));
   }
-});
+  
+  discordRateLimit.lastRequest = Date.now();
+};
 
 // Vanity URL check endpoint
 app.post('/api/vanity/:code', async (req, res) => {
@@ -99,49 +92,58 @@ app.post('/api/vanity/:code', async (req, res) => {
       return res.status(400).json({ error: 'Invalid vanity URL format' });
     }
 
+    // Enforce rate limit
+    await enforceDiscordRateLimit();
+
     const url = `https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`;
     console.log('Making request to Discord API:', url);
     
     const headers = getDiscordHeaders();
-    console.log('Using headers:', {
-      'User-Agent': headers.get('User-Agent'),
-      // Log partial token for debugging (first few chars)
-      'Authorization': headers.get('Authorization').substring(0, 15) + '...'
-    });
-
     const response = await fetch(url, { headers });
     
-    // Log the raw response for debugging
-    const rawText = await response.text();
-    console.log('Raw Discord API response:', rawText);
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch (parseError) {
-      console.error('Failed to parse response as JSON:', parseError);
-      return res.status(500).json({ 
-        error: 'Invalid response from Discord API',
-        details: rawText.substring(0, 200) // First 200 chars of response
+    // Handle Discord rate limiting
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get('retry-after') || '5', 10);
+      console.log(`Discord rate limit hit. Retry after ${retryAfter} seconds`);
+      return res.status(429).json({ 
+        error: 'Rate limited by Discord API',
+        retryAfter: retryAfter
       });
     }
 
+    // Handle 404 (invite not found = available)
     if (response.status === 404) {
-      return res.json({ available: true });
+      return res.json({ 
+        available: true,
+        error: null,
+        guildInfo: null
+      });
     }
 
+    const data = await response.json();
+
+    // Handle other errors
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.message || 'Failed to check vanity URL' });
+      return res.status(response.status).json({ 
+        error: data.message || 'Failed to check vanity URL',
+        available: false,
+        guildInfo: null
+      });
     }
 
+    // Handle invalid response
     if (!data.guild) {
-      return res.status(500).json({ error: 'Invalid response from Discord API' });
+      return res.status(500).json({ 
+        error: 'Invalid response from Discord API',
+        available: false,
+        guildInfo: null
+      });
     }
 
+    // Success response
     return res.json({
       available: false,
+      error: null,
       guild: {
         ...data.guild,
         approximate_member_count: data.approximate_member_count,
@@ -151,59 +153,52 @@ app.post('/api/vanity/:code', async (req, res) => {
     });
   } catch (error) {
     console.error('Vanity check error:', error);
-    res.status(500).json({ error: 'Failed to check vanity URL' });
-  }
-});
-
-// Test endpoint for invite data
-app.get('/api/test/invite/:code', async (req, res) => {
-  try {
-    const { code } = req.params;
-    console.log(`Testing invite code: ${code}`);
-
-    const response = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`, {
-      headers: getDiscordHeaders()
+    res.status(500).json({ 
+      error: 'Failed to check vanity URL',
+      available: false,
+      guildInfo: null
     });
-
-    const data = await response.json();
-    console.log('Raw Discord API response:', JSON.stringify(data, null, 2));
-
-    res.json(data);
-  } catch (error) {
-    console.error('Test invite error:', error);
-    res.status(500).json({ error: 'Failed to fetch invite data', details: error.message });
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err.stack);
-  
-  // Handle JSON parsing errors
-  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    return res.status(400).json({ error: 'Invalid JSON format' });
-  }
-
-  // Handle other known errors
-  if (err.status) {
-    return res.status(err.status).json({ error: err.message });
-  }
-
-  // Default error response
-  res.status(500).json({ 
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message 
-  });
-});
-
-// Health check endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ status: 'ok', message: 'API proxy is working' });
-});
-
+// Health check endpoint with detailed status
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  const healthCheck = {
+    status: 'ok',
+    timestamp: new Date(),
+    uptime: process.uptime(),
+    systemInfo: {
+      memory: {
+        total: os.totalmem(),
+        free: os.freemem(),
+        used: os.totalmem() - os.freemem()
+      },
+      cpu: os.loadavg(),
+      platform: os.platform(),
+      version: process.version
+    },
+    services: {
+      discord: {
+        status: 'unknown',
+        lastCheck: discordRateLimit.lastRequest
+      }
+    }
+  };
+
+  // Check Discord API status
+  fetch('https://discord.com/api/v10/gateway', { 
+    headers: getDiscordHeaders() 
+  })
+    .then(() => {
+      healthCheck.services.discord.status = 'ok';
+    })
+    .catch(() => {
+      healthCheck.services.discord.status = 'error';
+    })
+    .finally(() => {
+      const isHealthy = healthCheck.services.discord.status === 'ok';
+      res.status(isHealthy ? 200 : 503).json(healthCheck);
+    });
 });
 
 // Start server
