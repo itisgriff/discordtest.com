@@ -15,7 +15,7 @@ RETRY_INTERVAL=10
 GITHUB_REPO="https://itisgriff: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@github.com/itisgriff/DiscordTest.com.git"
 NODE_VERSION="v23.3.0"
 LOG_DIR="$SCRIPT_DIR/logs"
-DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1315432388297494538/-vrWc_lLHtPtWEgeYN2xOfbtNn-FaekK_iIA-fKEEGZntLLyK6JScrSSAteOEhpcGONt"
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1193938440447561798/QXNbxZxZWBPxGPBWvqxhxFtBWPxZWBPxGPBWvqxhxFtB"
 
 # Colors for output
 RED='\033[0;31m'
@@ -158,12 +158,9 @@ deploy() {
         cd "$DEPLOY_DIR"
     fi
 
-    # Install dependencies and build
-    log "Installing dependencies..." "$YELLOW"
-    npm install
-    
-    log "Building application..." "$YELLOW"
-    npm run build
+    # Install production dependencies only
+    log "Installing production dependencies..." "$YELLOW"
+    npm ci --only=production
 
     # Start application with PM2
     log "Starting application with PM2..." "$YELLOW" "true"
