@@ -10,20 +10,11 @@ pages_build_output_dir = "dist"
 vars = { ENVIRONMENT = "development" }
 workers_dev = true
 
-[[env.development.kv_namespaces]]
-binding = "RATE_LIMIT_STORE"
-preview_id = "test_namespace"
-id = "test_namespace"
-
 # Production environment
 [env.production]
 vars = { ENVIRONMENT = "production", DISCORD_BOT_TOKEN = "" }
 workers_dev = false
 route = { pattern = "discordtest.com/api/*", custom_domain = true }
-
-[[env.production.kv_namespaces]]
-binding = "RATE_LIMIT_STORE"
-id = ""
 
 [build]
 command = "npm run build"

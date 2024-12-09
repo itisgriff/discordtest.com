@@ -1,6 +1,35 @@
 # Deployment Guide for DiscordTest.com
 
-This guide will walk you through deploying the application to discordtest.com using Cloudflare Pages for the frontend and Cloudflare Workers for the backend.
+## Local Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Set up your environment variables:
+   - Copy `.env.example` to `.env`
+   - Add your Discord Bot Token
+   - Update any other variables if needed
+
+3. Start the development servers:
+   
+   Terminal 1 (Frontend):
+   ```bash
+   npm run dev
+   ```
+   This will start the frontend at http://localhost:5173
+
+   Terminal 2 (Backend):
+   ```bash
+   npm run dev:server
+   ```
+   This will start the backend at http://localhost:3000
+
+4. Your development environment is now ready:
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3000
+   - API endpoints will be available at http://localhost:3000/api/*
 
 ## Prerequisites
 
