@@ -31,12 +31,12 @@ This guide will walk you through deploying the application to discordtest.com us
 6. Configure your build settings:
    ```
    Framework preset: Vite
-   Build command: npm run build
+   Build command: npx tsc -b tsconfig.build.json && vite build
    Build output directory: dist
    ```
 7. Add the following environment variables:
    ```
-   NODE_VERSION: 18
+   NODE_VERSION: 20.9.0
    ```
 8. Click "Save and Deploy"
 
