@@ -74,7 +74,7 @@ function UserLookupContent() {
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text">
+      <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text leading-relaxed py-1">
         Discord User Lookup
       </h1>
       
