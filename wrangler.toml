@@ -19,14 +19,14 @@ id = "test_namespace"
 [env.production]
 vars = { 
   ENVIRONMENT = "production",
-  DISCORD_BOT_TOKEN = "" # Will be set in Cloudflare dashboard
+  DISCORD_BOT_TOKEN = ""
 }
 workers_dev = false
 route = { pattern = "discordtest.com/api/*", custom_domain = true }
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT_STORE"
-id = "" # You'll need to create this in Cloudflare dashboard
+id = ""
 
 [build]
 command = "npm run build"

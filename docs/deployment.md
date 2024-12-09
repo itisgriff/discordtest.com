@@ -31,7 +31,7 @@ This guide will walk you through deploying the application to discordtest.com us
 6. Configure your build settings:
    ```
    Framework preset: Custom
-   Build command: npm install && npm run build
+   Build command: npm install typescript && npm run build
    Build output directory: dist
    Root directory: /
    ```
