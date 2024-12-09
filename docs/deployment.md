@@ -30,15 +30,33 @@ This guide will walk you through deploying the application to discordtest.com us
 5. Select your GitHub repository
 6. Configure your build settings:
    ```
-   Framework preset: Vite
-   Build command: npx tsc -b tsconfig.build.json && vite build
+   Framework preset: Custom
+   Build command: npm install && npm run build
    Build output directory: dist
+   Root directory: /
    ```
 7. Add the following environment variables:
    ```
    NODE_VERSION: 20.9.0
+   NPM_VERSION: 10.2.5
    ```
 8. Click "Save and Deploy"
+
+## Project Configuration Files
+
+The project uses these configuration files:
+
+1. TypeScript Configurations:
+   - `tsconfig.json` - Base configuration
+   - `tsconfig.app.json` - Frontend React app
+   - `tsconfig.node.json` - Build tools and Node.js code
+   - `tsconfig.worker.json` - Cloudflare Workers
+
+2. Build Configuration:
+   - `vite.config.ts` - Frontend build configuration
+   - `wrangler.toml` - Cloudflare Workers configuration
+
+Note: `.tsbuildinfo` files are TypeScript cache files and can be ignored.
 
 ## Step 3: Configure Custom Domain
 
