@@ -6,7 +6,7 @@ import { prettyJSON } from 'hono/pretty-json';
 import vanityRoutes from './routes/vanity';
 import userRoutes from './routes/users';
 import healthRoutes from './routes/health';
-import { initializeEnv } from './config/environment';
+import { initializeEnv, ENV } from './config/environment';
 
 // Define env interface for type safety
 interface Bindings {
@@ -50,7 +50,7 @@ const memoryStore = new Map<string, { count: number; timestamp: number }>();
 async function rateLimiter(c: any, next: any) {
   const ip = c.req.headers.get('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
   const key = `ratelimit:${ip}`;
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = ENV.NODE_ENV === 'development';
   
   try {
     let currentRequests: { count: number; timestamp: number };
@@ -121,9 +121,9 @@ app.onError((err, c) => {
 });
 
 // Development server
-if (process.env.NODE_ENV === 'development') {
-  const port = Number(process.env.PORT) || 3000;
-  const hostname = process.env.HOST || 'localhost';
+if (ENV.NODE_ENV === 'development') {
+  const port = ENV.PORT;
+  const hostname = ENV.HOST;
 
   console.log(`Starting development server on http://${hostname}:${port}`);
   import('@hono/node-server').then(({ serve }) => {
