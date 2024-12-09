@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "set PORT=3000&& set HOST=localhost&& set NODE_ENV=development&& node --import tsx server/index.ts",
+    "dev:server": "cross-env NODE_ENV=development node --import tsx server/index.ts",
     "build": "tsc -b && vite build",
+    "build:worker": "wrangler deploy",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -32,6 +33,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240208.0",
+    "wrangler": "^3.28.1",
     "@types/lodash": "^4.14.202",
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.1",
