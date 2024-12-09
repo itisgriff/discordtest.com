@@ -17,10 +17,7 @@ id = "test_namespace"
 
 # Production environment
 [env.production]
-vars = { 
-  ENVIRONMENT = "production",
-  DISCORD_BOT_TOKEN = ""
-}
+vars = { ENVIRONMENT = "production", DISCORD_BOT_TOKEN = "" }
 workers_dev = false
 route = { pattern = "discordtest.com/api/*", custom_domain = true }
 
