@@ -3,6 +3,7 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Home } from '@/pages/Home';
 import VanityCheck from '@/pages/VanityCheck';
 import UserLookup from '@/pages/UserLookup';
+import NotFound from '@/pages/NotFound';
 import { Toaster } from '@/components/ui/toast';
 
 export function App() {
@@ -15,6 +16,7 @@ export function App() {
           <Route path="/vanity/:code" element={<VanityCheck />} />
           <Route path="/lookup" element={<UserLookup />} />
           <Route path="/lookup/:userId" element={<UserLookup />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </PageLayout>
       <Toaster />

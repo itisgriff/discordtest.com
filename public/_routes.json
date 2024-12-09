@@ -4,14 +4,10 @@
     "/*"
   ],
   "exclude": [
-    "/build/*",
-    "/static/*",
     "/api/*",
-    "/*.ico",
+    "/assets/*",
     "/*.png",
-    "/*.svg",
-    "/*.json",
-    "/*.txt"
-  ],
-  "routes": null
+    "/*.ico",
+    "/*.svg"
+  ]
 } 
