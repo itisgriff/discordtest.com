@@ -30,6 +30,7 @@ This guide will walk you through deploying the application to discordtest.com us
 5. Select your GitHub repository
 6. Configure your build settings:
    ```
+   Framework preset: Vite
    Build command: npm run build
    Build output directory: dist
    ```
