@@ -1,6 +1,5 @@
-import { DISCORD_CONFIG } from '../config/environment';
+import { DISCORD_CONFIG, ENV } from '../config/environment';
 import type { DiscordInviteResponse, DiscordUser, UnknownInviteResponse } from '../../shared/types/discord';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 interface RateLimitInfo {
   limit: number;
@@ -9,11 +8,6 @@ interface RateLimitInfo {
   resetAfter: number;
   bucket: string;
   scope?: string;
-}
-
-interface CacheEntry {
-  data: DiscordInviteResponse;
-  timestamp: number;
 }
 
 interface RawDiscordUser {
@@ -27,16 +21,11 @@ interface RawDiscordUser {
   verified?: boolean;
 }
 
-// Separate rate limiters for different buckets
-const rateLimiters = new Map<string, RateLimiterMemory>();
-
-// Cache for invite responses
-const inviteCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 60 * 1000; // 1 minute cache
+const CACHE_TTL = 60; // 60 seconds cache
 
 export class DiscordService {
   private static getHeaders(): HeadersInit {
-    const discordToken = process.env.DISCORD_BOT_TOKEN;
+    const discordToken = ENV.DISCORD_BOT_TOKEN;
     if (!discordToken) {
       throw new Error('Bot token not configured');
     }
@@ -70,52 +59,41 @@ export class DiscordService {
     };
   }
 
-  private static async enforceRateLimit(bucket: string, points: number): Promise<void> {
-    let limiter = rateLimiters.get(bucket);
-    if (!limiter) {
-      limiter = new RateLimiterMemory({
-        points,
-        duration: 60 // Default to 60 seconds if we don't have reset info
-      });
-      rateLimiters.set(bucket, limiter);
-    }
-
-    await limiter.consume('default', 1);
-  }
-
-  private static getCachedInvite(code: string): DiscordInviteResponse | null {
-    const cached = inviteCache.get(code);
-    if (!cached) return null;
-
-    // Check if cache is still valid
-    if (Date.now() - cached.timestamp > CACHE_TTL) {
-      inviteCache.delete(code);
+  private static async getCachedInvite(code: string): Promise<DiscordInviteResponse | null> {
+    try {
+      const cacheKey = `invite:${code}`;
+      const cache = caches.default;
+      const response = await cache.match(cacheKey);
+      
+      if (!response) return null;
+      
+      const data = await response.json() as DiscordInviteResponse;
+      return data;
+    } catch (error) {
+      console.error('Cache error:', error);
       return null;
     }
-
-    return cached.data;
   }
 
-  private static setCachedInvite(code: string, data: DiscordInviteResponse): void {
-    inviteCache.set(code, {
-      data,
-      timestamp: Date.now()
-    });
-
-    // Cleanup old cache entries periodically
-    if (inviteCache.size > 1000) { // Prevent memory leaks
-      const now = Date.now();
-      for (const [key, value] of inviteCache.entries()) {
-        if (now - value.timestamp > CACHE_TTL) {
-          inviteCache.delete(key);
+  private static async setCachedInvite(code: string, data: DiscordInviteResponse): Promise<void> {
+    try {
+      const cacheKey = `invite:${code}`;
+      const cache = caches.default;
+      const response = new Response(JSON.stringify(data), {
+        headers: {
+          'Cache-Control': `public, max-age=${CACHE_TTL}`,
+          'Content-Type': 'application/json'
         }
-      }
+      });
+      await cache.put(cacheKey, response);
+    } catch (error) {
+      console.error('Cache error:', error);
     }
   }
 
   static async checkInvite(code: string): Promise<DiscordInviteResponse | UnknownInviteResponse> {
     // Check cache first
-    const cached = this.getCachedInvite(code);
+    const cached = await this.getCachedInvite(code);
     if (cached) {
       console.log(`Cache hit for invite code: ${code}`);
       return cached;
@@ -124,25 +102,7 @@ export class DiscordService {
     const url = `${DISCORD_CONFIG.baseUrl}/${DISCORD_CONFIG.apiVersion}/invites/${code}?with_counts=true&with_expiration=true`;
     const headers = this.getHeaders();
     
-    // Enforce rate limit before making the request
-    if (rateLimiters.size > 0) {
-      const bucket = Array.from(rateLimiters.keys())[0];
-      await this.enforceRateLimit(bucket, 1);
-    }
-    
     const response = await fetch(url, { headers });
-    const rateLimit = this.getRateLimitInfo(response.headers);
-
-    // Update rate limiter if we got rate limit info
-    if (rateLimit) {
-      const bucket = rateLimit.bucket;
-      if (!rateLimiters.has(bucket)) {
-        rateLimiters.set(bucket, new RateLimiterMemory({
-          points: rateLimit.limit,
-          duration: rateLimit.resetAfter
-        }));
-      }
-    }
 
     // Handle rate limit response
     if (response.status === 429) {
@@ -165,48 +125,25 @@ export class DiscordService {
     }
 
     // Cache successful responses
-    this.setCachedInvite(code, data);
+    await this.setCachedInvite(code, data);
 
     return data;
   }
 
   static async getRateLimitStats() {
-    const total = rateLimiters.size;
-    let active = 0;
-
-    for (const limiter of rateLimiters.values()) {
-      const points = await limiter.get('default');
-      if (points && points.consumedPoints > 0) {
-        active++;
-      }
-    }
-
-    return { total, active };
+    // Since we're using Discord's rate limiting, just return basic info
+    return {
+      total: 0,
+      active: 0,
+      message: "Rate limiting handled by Discord API"
+    };
   }
 
   static async lookupUser(id: string): Promise<DiscordUser> {
     const url = `${DISCORD_CONFIG.baseUrl}/${DISCORD_CONFIG.apiVersion}/users/${id}`;
     const headers = this.getHeaders();
     
-    // Enforce rate limit before making the request
-    if (rateLimiters.size > 0) {
-      const bucket = Array.from(rateLimiters.keys())[0];
-      await this.enforceRateLimit(bucket, 1);
-    }
-    
     const response = await fetch(url, { headers });
-    const rateLimit = this.getRateLimitInfo(response.headers);
-
-    // Update rate limiter if we got rate limit info
-    if (rateLimit) {
-      const bucket = rateLimit.bucket;
-      if (!rateLimiters.has(bucket)) {
-        rateLimiters.set(bucket, new RateLimiterMemory({
-          points: rateLimit.limit,
-          duration: rateLimit.resetAfter
-        }));
-      }
-    }
 
     // Handle rate limit response
     if (response.status === 429) {
