@@ -1,1 +1,5 @@
-/* /index.html 200 
+/vanity/* /index.html 200
+/lookup/* /index.html 200
+/vanity /index.html 200
+/lookup /index.html 200
+/ /index.html 200 

@@ -2,7 +2,7 @@ import { VanityUrlResponse } from '@/types/discord';
 
 const API_BASE = import.meta.env.PROD 
   ? '/api'
-  : 'http://localhost:3000/api';
+  : 'http://localhost:8787/api';
 
 const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
