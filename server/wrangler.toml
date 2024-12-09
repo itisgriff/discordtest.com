@@ -13,10 +13,6 @@ route = { pattern = "discordtest.com/api/*", custom_domain = true }
 vars = { ENVIRONMENT = "development" }
 workers_dev = true
 
-[build]
-command = "npm run build:worker"
-watch_dir = "."
-
 # Add secrets via: npx wrangler secret put DISCORD_BOT_TOKEN
 # [vars]
 # MY_VARIABLE = "production_value" 

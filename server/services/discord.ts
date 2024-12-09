@@ -1,5 +1,3 @@
-import { Headers } from 'node-fetch';
-import fetch from 'node-fetch';
 import { DISCORD_CONFIG } from '../config/environment';
 import type { DiscordInviteResponse, DiscordUser, UnknownInviteResponse } from '../../shared/types/discord';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -37,17 +35,17 @@ const inviteCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 60 * 1000; // 1 minute cache
 
 export class DiscordService {
-  private static getHeaders(): Headers {
+  private static getHeaders(): HeadersInit {
     const discordToken = process.env.DISCORD_BOT_TOKEN;
     if (!discordToken) {
       throw new Error('Bot token not configured');
     }
 
-    return new Headers({
+    return {
       'Authorization': `Bot ${discordToken}`,
       'Content-Type': 'application/json',
       'User-Agent': 'DiscordBot (https://discordtest.com, 1.0.0)'
-    });
+    };
   }
 
   private static getRateLimitInfo(headers: Headers): RateLimitInfo | null {
