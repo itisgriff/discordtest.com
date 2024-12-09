@@ -4,10 +4,11 @@
     "/*"
   ],
   "exclude": [
+    "/build/*",
     "/api/*",
-    "/assets/*",
-    "/*.png",
     "/*.ico",
-    "/*.svg"
+    "/*.png",
+    "/*.svg",
+    "/*.json"
   ]
 } 

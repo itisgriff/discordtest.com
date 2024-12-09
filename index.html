@@ -10,6 +10,16 @@
     <title>DiscordTest - Discord Server Management & Utility Tools</title>
     <link rel="manifest" href="/manifest.json" />
     <script type="application/ld+json" src="/structured-data.json"></script>
+    <!-- Handle redirect from 404 page -->
+    <script>
+      (function() {
+        const redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
     <!-- Cloudflare Analytics -->
     <script>
       // Suppress console errors if analytics is blocked
