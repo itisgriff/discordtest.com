@@ -1,23 +1,25 @@
+export type { VanityUrlResponse } from '../../shared/types/discord';
+
 export interface GuildInfo {
   id: string;
   name: string;
-  memberCount: number;
-  onlineCount: number;
   icon: string | null;
-  splash: string | null;
-  banner: string | null;
   description: string | null;
   features: string[];
-  verificationLevel: number;
-  nsfwLevel: number;
-  isNsfw: boolean;
-  boostCount: number;
-  inviteCode: string;
+  memberCount?: number;
+  onlineCount?: number;
   inviteChannel?: {
     id: string;
     name: string;
     type: number;
   };
+  verificationLevel: number;
+  nsfwLevel: number;
+  isNsfw: boolean;
+  boostCount?: number;
+  inviteCode?: string;
+  splash: string | null;
+  banner: string | null;
 }
 
 export interface ClanInfo {
@@ -31,25 +33,11 @@ export interface DiscordUser {
   id: string;
   username: string;
   avatar: string | null;
-  discriminator: string;
-  public_flags: number;
-  flags: number;
   banner: string | null;
-  accent_color: number | null;
-  global_name: string | null;
-  avatar_decoration_data: any | null;
-  banner_color: string | null;
-  clan: ClanInfo;
-  primary_guild: ClanInfo;
-  createdAt: Date;
+  accentColor: number | null;
+  flags: number;
   bot?: boolean;
   verified?: boolean;
-}
-
-export interface VanityUrlResponse {
-  available: boolean;
-  error: string | null;
-  guildInfo: GuildInfo | null;
 }
 
 export interface ApiError {

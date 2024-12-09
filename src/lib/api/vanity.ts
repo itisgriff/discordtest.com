@@ -20,7 +20,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       return {
         available: false,
         error: 'Invalid vanity URL format',
-        guildInfo: null
+        guild: null
       };
     }
 
@@ -37,13 +37,13 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
           return {
             available: false,
             error: 'Too many requests. Please wait a moment.',
-            guildInfo: null
+            guild: null
           };
         default:
           return {
             available: false,
             error: data.error || `Failed to check vanity URL: ${response.status}`,
-            guildInfo: null
+            guild: null
           };
       }
     }
@@ -54,7 +54,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       return {
         available: true,
         error: `The vanity URL "discord.com/invite/${code}" is available! You can use it for your server.`,
-        guildInfo: null
+        guild: null
       };
     }
 
@@ -62,18 +62,18 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       return {
         available: false,
         error: 'Invalid response format from server',
-        guildInfo: null
+        guild: null
       };
     }
 
     return {
       available: false,
       error: null,
-      guildInfo: {
+      guild: {
         id: data.guild.id,
         name: data.guild.name,
-        memberCount: data.guild.approximate_member_count,
-        onlineCount: data.guild.approximate_presence_count,
+        approximate_member_count: data.guild.approximate_member_count,
+        approximate_presence_count: data.guild.approximate_presence_count,
         icon: data.guild.icon 
           ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`
           : null,
@@ -85,12 +85,11 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
           : null,
         description: data.guild.description,
         features: data.guild.features || [],
-        verificationLevel: data.guild.verification_level,
-        nsfwLevel: data.guild.nsfw_level,
-        isNsfw: data.guild.nsfw || false,
-        boostCount: data.guild.premium_subscription_count || 0,
-        inviteCode: code,
-        inviteChannel: data.channel ? {
+        verification_level: data.guild.verification_level,
+        nsfw_level: data.guild.nsfw_level,
+        nsfw: data.guild.nsfw || false,
+        premium_subscription_count: data.guild.premium_subscription_count || 0,
+        channel: data.channel ? {
           id: data.channel.id,
           name: data.channel.name,
           type: data.channel.type
@@ -102,7 +101,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     return {
       available: false,
       error: 'Failed to connect to Discord API',
-      guildInfo: null
+      guild: null
     };
   }
 } 

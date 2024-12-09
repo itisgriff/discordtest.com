@@ -1,7 +1,7 @@
-import animate from 'tailwindcss-animate';
+const animate = require('tailwindcss-animate');
 
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: ['class'],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -10,6 +10,13 @@ export default {
     './src/**/*.{ts,tsx}',
   ],
   theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
       borderRadius: {
         lg: 'var(--radius)',

@@ -12,7 +12,9 @@ export function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/vanity" element={<VanityCheck />} />
-          <Route path="/lookup/:userId?" element={<UserLookup />} />
+          <Route path="/vanity/:code" element={<VanityCheck />} />
+          <Route path="/lookup" element={<UserLookup />} />
+          <Route path="/lookup/:userId" element={<UserLookup />} />
         </Routes>
       </PageLayout>
       <Toaster />
