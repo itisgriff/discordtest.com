@@ -3,10 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": "^22.11.0"
+  },
   "scripts": {
     "dev": "vite",
     "dev:server": "cross-env NODE_ENV=development node --import tsx server/index.ts",
-    "build": "npx tsc && vite build",
+    "build": "tsc && vite build",
     "build:worker": "wrangler deploy",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -37,8 +40,8 @@
     "wrangler": "^3.28.1",
     "@types/lodash": "^4.14.202",
     "@types/node": "^22.10.1",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "cross-env": "^7.0.3",
