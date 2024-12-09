@@ -1,15 +1,6 @@
 import { DISCORD_CONFIG, ENV } from '../config/environment';
 import type { DiscordInviteResponse, DiscordUser, UnknownInviteResponse } from '../../shared/types/discord';
 
-interface RateLimitInfo {
-  limit: number;
-  remaining: number;
-  reset: number;
-  resetAfter: number;
-  bucket: string;
-  scope?: string;
-}
-
 interface RawDiscordUser {
   id: string;
   username: string;
@@ -37,31 +28,9 @@ export class DiscordService {
     };
   }
 
-  private static getRateLimitInfo(headers: Headers): RateLimitInfo | null {
-    const limit = headers.get('X-RateLimit-Limit');
-    const remaining = headers.get('X-RateLimit-Remaining');
-    const reset = headers.get('X-RateLimit-Reset');
-    const resetAfter = headers.get('X-RateLimit-Reset-After');
-    const bucket = headers.get('X-RateLimit-Bucket');
-    const scope = headers.get('X-RateLimit-Scope');
-
-    if (!limit || !remaining || !reset || !resetAfter || !bucket) {
-      return null;
-    }
-
-    return {
-      limit: parseInt(limit),
-      remaining: parseInt(remaining),
-      reset: parseInt(reset),
-      resetAfter: parseFloat(resetAfter),
-      bucket,
-      scope: scope || undefined
-    };
-  }
-
   private static async getCachedInvite(code: string): Promise<DiscordInviteResponse | null> {
     try {
-      const cacheKey = `invite:${code}`;
+      const cacheKey = new URL(`https://discordtest.com/cache/invite/${code}`).toString();
       const cache = caches.default;
       const response = await cache.match(cacheKey);
       
@@ -77,7 +46,7 @@ export class DiscordService {
 
   private static async setCachedInvite(code: string, data: DiscordInviteResponse): Promise<void> {
     try {
-      const cacheKey = `invite:${code}`;
+      const cacheKey = new URL(`https://discordtest.com/cache/invite/${code}`).toString();
       const cache = caches.default;
       const response = new Response(JSON.stringify(data), {
         headers: {

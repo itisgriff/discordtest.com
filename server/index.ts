@@ -48,11 +48,11 @@ const memoryStore = new Map<string, { count: number; timestamp: number }>();
 
 // Rate limiting middleware that works in both environments
 async function rateLimiter(c: any, next: any) {
-  const ip = c.req.headers.get('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
-  const key = `ratelimit:${ip}`;
-  const isDev = ENV.NODE_ENV === 'development';
-  
   try {
+    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
+    const key = `ratelimit:${ip}`;
+    const isDev = ENV.NODE_ENV === 'development';
+    
     let currentRequests: { count: number; timestamp: number };
 
     if (isDev) {
@@ -89,10 +89,10 @@ async function rateLimiter(c: any, next: any) {
       await c.env.RATE_LIMIT_STORE?.put(key, JSON.stringify(currentRequests), { expirationTtl: 5 });
     }
     
-    return next();
+    await next();
   } catch (error) {
     console.error('Rate limit error:', error);
-    return next();
+    await next();
   }
 }
 
@@ -120,22 +120,7 @@ app.onError((err, c) => {
   }, 500);
 });
 
-// Development server
-if (ENV.NODE_ENV === 'development') {
-  const port = ENV.PORT;
-  const hostname = ENV.HOST;
-
-  console.log(`Starting development server on http://${hostname}:${port}`);
-  import('@hono/node-server').then(({ serve }) => {
-    serve({
-      fetch: app.fetch,
-      port,
-      hostname,
-    });
-  });
-}
-
-// Export for Cloudflare Workers (used in production)
+// Export for Cloudflare Workers
 export default {
   fetch: app.fetch,
   scheduled: async (_: any, _env: Bindings, ctx: ExecutionContext) => {
