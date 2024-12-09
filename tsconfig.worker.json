@@ -1,19 +1,12 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "target": "ES2020",
     "module": "ES2022",
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types"],
     "moduleResolution": "node",
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "jsx": "preserve"
   },
   "include": ["server/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src"]
 } 
