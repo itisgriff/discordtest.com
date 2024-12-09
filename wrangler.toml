@@ -5,10 +5,13 @@ compatibility_date = "2024-01-01"
 # Development environment
 [env.development]
 vars = { ENVIRONMENT = "development" }
+workers_dev = true
 
 # Production environment
 [env.production]
 vars = { ENVIRONMENT = "production" }
+workers_dev = false
+route = { pattern = "discordtest.com/api/*", custom_domain = true }
 
 # Rate limiting using Cloudflare's KV
 [[kv_namespaces]]
@@ -16,5 +19,17 @@ binding = "RATE_LIMIT_STORE"
 preview_id = "test_namespace" # For local development
 id = "" # You'll get this from Cloudflare dashboard
 
+[build]
+command = "npm run build"
+watch_dir = "server"
+
 [vars]
 DISCORD_BOT_TOKEN = "" # Will be set in Cloudflare dashboard
+
+# Add CORS headers
+[env.production.build.upload]
+format = "service-worker"
+
+[[env.production.build.upload.rules]]
+type = "ESModule"
+globs = ["**/*.js"]
