@@ -10,9 +10,11 @@ const envSchema = z.object({
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('30'),
 });
 
-export const validateEnv = () => {
+export type Env = z.infer<typeof envSchema>;
+
+export const validateEnv = (env: Record<string, string | undefined>) => {
   try {
-    return envSchema.parse(process.env);
+    return envSchema.parse(env);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       const issues = error.issues.map((issue: z.ZodIssue) => 
@@ -24,7 +26,13 @@ export const validateEnv = () => {
   }
 };
 
-export const ENV = validateEnv();
+// This will be initialized when the worker starts
+export let ENV: z.infer<typeof envSchema>;
+
+export const initializeEnv = (env: Record<string, string | undefined>) => {
+  ENV = validateEnv(env);
+  return ENV;
+};
 
 export const DISCORD_CONFIG = {
   baseUrl: 'https://discord.com/api',
@@ -36,7 +44,7 @@ export const DISCORD_CONFIG = {
   }
 } as const;
 
-export const SERVER_CONFIG = {
+export const getServerConfig = () => ({
   port: ENV.PORT,
   host: ENV.HOST,
   isDevelopment: ENV.NODE_ENV === 'development',
@@ -47,4 +55,4 @@ export const SERVER_CONFIG = {
     windowMs: ENV.RATE_LIMIT_WINDOW_MS,
     maxRequests: ENV.RATE_LIMIT_MAX_REQUESTS,
   }
-} as const; 
+} as const); 

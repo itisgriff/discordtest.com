@@ -2,11 +2,13 @@ name = "discord-tools-api"
 main = "index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
+routes = [
+  { pattern = "discordtest.com/api/*", custom_domain = true }
+]
 
 # Production environment
 [env.production]
 vars = { ENVIRONMENT = "production" }
-route = { pattern = "discordtest.com/api/*", custom_domain = true }
 
 # Development environment
 [env.development]
@@ -16,3 +18,7 @@ workers_dev = true
 # Add secrets via: npx wrangler secret put DISCORD_BOT_TOKEN
 # [vars]
 # MY_VARIABLE = "production_value" 
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true

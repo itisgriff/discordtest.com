@@ -124,6 +124,12 @@ export class DiscordService {
     const url = `${DISCORD_CONFIG.baseUrl}/${DISCORD_CONFIG.apiVersion}/invites/${code}?with_counts=true&with_expiration=true`;
     const headers = this.getHeaders();
     
+    // Enforce rate limit before making the request
+    if (rateLimiters.size > 0) {
+      const bucket = Array.from(rateLimiters.keys())[0];
+      await this.enforceRateLimit(bucket, 1);
+    }
+    
     const response = await fetch(url, { headers });
     const rateLimit = this.getRateLimitInfo(response.headers);
 
@@ -181,6 +187,12 @@ export class DiscordService {
   static async lookupUser(id: string): Promise<DiscordUser> {
     const url = `${DISCORD_CONFIG.baseUrl}/${DISCORD_CONFIG.apiVersion}/users/${id}`;
     const headers = this.getHeaders();
+    
+    // Enforce rate limit before making the request
+    if (rateLimiters.size > 0) {
+      const bucket = Array.from(rateLimiters.keys())[0];
+      await this.enforceRateLimit(bucket, 1);
+    }
     
     const response = await fetch(url, { headers });
     const rateLimit = this.getRateLimitInfo(response.headers);
