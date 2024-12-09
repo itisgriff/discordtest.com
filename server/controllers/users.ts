@@ -1,7 +1,6 @@
 import { Context } from 'hono';
 import { StatusCode } from 'hono/utils/http-status';
 import { DiscordService } from '../services/discord';
-import type { DiscordUser } from '../../shared/types/discord';
 import { z } from 'zod';
 
 const userIdSchema = z.object({
@@ -11,7 +10,7 @@ const userIdSchema = z.object({
     .regex(/^\d+$/, 'Discord user ID must be numeric')
 });
 
-const createErrorResponse = (error: string, status: StatusCode = 500) => ({
+const createErrorResponse = (error: string) => ({
   error,
   user: null
 });
@@ -19,21 +18,19 @@ const createErrorResponse = (error: string, status: StatusCode = 500) => ({
 export async function lookupUser(c: Context) {
   try {
     const id = c.req.param('id');
-    console.log('Looking up user:', id);
 
     // Validate input
     const result = userIdSchema.safeParse({ id });
     if (!result.success) {
       console.log('Validation failed:', result.error.errors[0].message);
       return c.json(
-        createErrorResponse(result.error.errors[0].message, 400 as StatusCode),
+        createErrorResponse(result.error.errors[0].message),
         400 as StatusCode
       );
     }
 
     try {
       const user = await DiscordService.lookupUser(id);
-      console.log('User found:', user);
       return c.json({ error: null, user });
     } catch (error) {
       if (error instanceof Error) {
@@ -41,14 +38,14 @@ export async function lookupUser(c: Context) {
         // Handle rate limit errors specifically
         if (error.message.includes('Rate limited')) {
           return c.json(
-            createErrorResponse(error.message, 429 as StatusCode),
+            createErrorResponse(error.message),
             429 as StatusCode
           );
         }
         // Handle user not found
         if (error.message.includes('404')) {
           return c.json(
-            createErrorResponse('User not found', 404 as StatusCode),
+            createErrorResponse('User not found'),
             404 as StatusCode
           );
         }

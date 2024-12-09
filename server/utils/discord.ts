@@ -1,5 +1,5 @@
 import { Headers } from 'node-fetch';
-import { DISCORD_CONFIG } from '@/shared/config/environment';
+import { DISCORD_CONFIG } from '../config/environment';
 
 interface DiscordRateLimit {
   lastRequest: number;
