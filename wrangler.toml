@@ -10,29 +10,24 @@ pages_build_output_dir = "dist"
 vars = { ENVIRONMENT = "development" }
 workers_dev = true
 
+[[env.development.kv_namespaces]]
+binding = "RATE_LIMIT_STORE"
+preview_id = "test_namespace"
+id = "test_namespace"
+
 # Production environment
 [env.production]
-vars = { ENVIRONMENT = "production" }
+vars = { 
+  ENVIRONMENT = "production",
+  DISCORD_BOT_TOKEN = "" # Will be set in Cloudflare dashboard
+}
 workers_dev = false
 route = { pattern = "discordtest.com/api/*", custom_domain = true }
 
-# Rate limiting using Cloudflare's KV
-[[kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "RATE_LIMIT_STORE"
-preview_id = "test_namespace" # For local development
-id = "" # You'll get this from Cloudflare dashboard
+id = "" # You'll need to create this in Cloudflare dashboard
 
 [build]
 command = "npm run build"
 watch_dir = "server"
-
-[vars]
-DISCORD_BOT_TOKEN = "" # Will be set in Cloudflare dashboard
-
-# Add CORS headers
-[env.production.build.upload]
-format = "service-worker"
-
-[[env.production.build.upload.rules]]
-type = "ESModule"
-globs = ["**/*.js"]

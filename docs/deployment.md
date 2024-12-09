@@ -47,7 +47,33 @@ This guide will walk you through deploying the application to discordtest.com us
 3. Add your domain: `discordtest.com`
 4. Cloudflare will automatically configure DNS records
 
-## Step 4: Deploy Backend to Cloudflare Workers
+## Step 4: Set Up KV Namespace
+
+1. Go to Cloudflare Dashboard > Workers & Pages > KV
+2. Click "Create a namespace"
+3. Name it `rate_limit_store`
+4. Copy the ID of the created namespace
+5. Update `wrangler.toml` with the namespace ID:
+   ```toml
+   [[env.production.kv_namespaces]]
+   binding = "RATE_LIMIT_STORE"
+   id = "your-namespace-id-here"
+   ```
+
+## Step 5: Configure Environment Variables
+
+1. In your Cloudflare Pages settings, add these environment variables:
+   ```
+   VITE_API_URL: https://discordtest.com/api
+   ```
+
+2. In your Worker settings (Workers & Pages > your-worker > Settings > Variables), add:
+   ```
+   DISCORD_BOT_TOKEN: your-bot-token
+   ENVIRONMENT: production
+   ```
+
+## Step 6: Deploy Backend to Cloudflare Workers
 
 1. Login to Wrangler CLI:
    ```bash
@@ -75,7 +101,7 @@ This guide will walk you through deploying the application to discordtest.com us
    npm run build:worker -- --env production
    ```
 
-## Step 5: Connect Frontend to Backend
+## Step 7: Connect Frontend to Backend
 
 1. In your Cloudflare Pages settings, add these environment variables:
    ```
