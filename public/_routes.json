@@ -1,23 +1,17 @@
 {
   "version": 1,
-  "include": ["/"],
-  "exclude": ["/api/*"],
-  "routes": [
-    {
-      "src": "^/vanity/.*",
-      "dest": "/index.html"
-    },
-    {
-      "src": "^/lookup/.*",
-      "dest": "/index.html"
-    },
-    {
-      "src": "^/vanity$",
-      "dest": "/index.html"
-    },
-    {
-      "src": "^/lookup$",
-      "dest": "/index.html"
-    }
-  ]
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/build/*",
+    "/static/*",
+    "/api/*",
+    "/*.ico",
+    "/*.png",
+    "/*.svg",
+    "/*.json",
+    "/*.txt"
+  ],
+  "routes": null
 } 
