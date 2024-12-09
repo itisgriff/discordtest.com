@@ -1,0 +1,17 @@
+name = "discord-tools-api"
+main = "index.ts"
+compatibility_date = "2024-01-01"
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production" }
+route = { pattern = "discordtest.com/api/*", custom_domain = true }
+
+# Development environment
+[env.development]
+vars = { ENVIRONMENT = "development" }
+workers_dev = true
+
+[build]
+command = "npm run build:worker"
+watch_dir = "." 
