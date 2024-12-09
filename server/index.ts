@@ -6,15 +6,32 @@ import { prettyJSON } from 'hono/pretty-json';
 import vanityRoutes from './routes/vanity';
 import userRoutes from './routes/users';
 import healthRoutes from './routes/health';
+import { initializeEnv } from './config/environment';
 
 // Define env interface for type safety
-interface Env {
+interface Bindings {
   DISCORD_BOT_TOKEN: string;
   RATE_LIMIT_STORE?: KVNamespace;
   ENVIRONMENT: string;
+  NODE_ENV?: string;
+  PORT?: string;
+  HOST?: string;
+  CORS_ORIGIN?: string;
+  RATE_LIMIT_WINDOW_MS?: string;
+  RATE_LIMIT_MAX_REQUESTS?: string;
+  [key: string]: string | KVNamespace | undefined;
 }
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Bindings }>();
+
+// Initialize environment at startup
+app.use('*', async (c, next) => {
+  const stringEnv = Object.fromEntries(
+    Object.entries(c.env).filter(([_, v]) => typeof v === 'string' || typeof v === 'undefined')
+  ) as Record<string, string | undefined>;
+  initializeEnv(stringEnv);
+  await next();
+});
 
 // Middleware
 app.use('*', logger());
@@ -121,7 +138,7 @@ if (process.env.NODE_ENV === 'development') {
 // Export for Cloudflare Workers (used in production)
 export default {
   fetch: app.fetch,
-  scheduled: async (event: any, env: Env, ctx: ExecutionContext) => {
+  scheduled: async (_: any, _env: Bindings, ctx: ExecutionContext) => {
     ctx.waitUntil(Promise.resolve());
   }
 }; 
