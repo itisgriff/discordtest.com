@@ -1,180 +1,289 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { lookupUser } from '@/lib/api';
+import { lookupUser } from '@/lib/api/user';
 import { toast } from '@/components/ui/toast';
-import { format } from 'date-fns';
-import { getUserFlags } from '@/lib/utils/userFlags';
 import { MetaTags } from '@/components/layout/MetaTags';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { DiscordUser } from '@/types/discord';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getUserFlags } from '@/lib/utils/userFlags';
+import { JsonViewer } from '@/components/ui/JsonViewer';
 
-export default function UserLookup() {
-  const [userId, setUserId] = useState('');
+function UserLookupContent() {
+  const { userId: urlUserId } = useParams<{ userId?: string }>();
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState(urlUserId || '');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
+  const [showRawData, setShowRawData] = useState(false);
 
-  const handleSearch = useCallback(async () => {
-    if (!userId) {
+  // Effect to handle URL parameter changes
+  useEffect(() => {
+    if (urlUserId) {
+      handleLookup(urlUserId);
+    }
+  }, [urlUserId]);
+
+  const handleLookup = useCallback(async (id?: string) => {
+    const lookupId = id || userId;
+    if (!lookupId) {
       toast.error("Please enter a user ID");
       return;
     }
 
+    // Update URL if it doesn't match the current ID
+    if (!id && lookupId !== urlUserId) {
+      navigate(`/lookup/${lookupId}`);
+    }
+
     setLoading(true);
     try {
-      const result = await lookupUser(userId);
-      
-      if (!result) {
-        toast.error('Failed to lookup user');
-        return;
-      }
-
-      if ('error' in result && typeof result.error === 'string') {
-        toast.error(result.error);
-      } else {
+      const result = await lookupUser(lookupId);
+      if (result) {
         setUser(result);
       }
-    } catch (error) {
-      console.error('API Error:', error);
-      toast.error('Failed to lookup user');
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, urlUserId, navigate]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
-      handleSearch();
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUserId(value);
   };
 
+  const handlePillClick = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`Copied ${label}`);
+  };
+
+  const LoadingSkeleton = () => (
+    <div className="space-y-4 animate-pulse">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-3 w-1/4" />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <>
-      <MetaTags 
-        title="User Lookup"
-        description="Look up Discord user information using their ID."
-        path="/lookup"
-      />
+    <div className="container max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text">
+        Discord User Lookup
+      </h1>
       
-      <div className="container max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text">
-          User Lookup
-        </h1>
-        
-        <p className="text-muted-foreground text-center mb-8">
-          Look up Discord user information using their ID.
-        </p>
+      <p className="text-muted-foreground text-center mb-8">
+        Look up a Discord user by their ID.
+      </p>
 
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter user ID"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={loading}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSearch}
-                disabled={loading || !userId}
-                className="bg-accent hover:bg-accent/90 min-w-[120px]"
-                aria-label={loading ? "Loading..." : "Search"}
-              >
-                {loading ? "Loading..." : "Search"}
-              </Button>
-            </div>
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter user ID"
+              value={userId}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="flex-1"
+              aria-label="User ID input"
+              minLength={17}
+              maxLength={20}
+              autoComplete="off"
+              data-form-type="other"
+              data-lpignore="true"
+            />
+            <Button 
+              onClick={() => handleLookup()}
+              disabled={loading || !userId}
+              className="bg-accent hover:bg-accent/90 min-w-[120px]"
+              aria-label={loading ? "Looking up..." : "Look up user"}
+            >
+              {loading ? "Looking up..." : "Look up"}
+            </Button>
+          </div>
 
-            {user && (
-              <div className="space-y-4 animate-in fade-in-50">
-                {/* Basic Info Card */}
-                <div className="flex items-start gap-4 p-4 bg-card rounded-lg border">
-                  <div className="flex flex-col items-center gap-2">
+          {loading && <LoadingSkeleton />}
+
+          {!loading && user && (
+            <>
+              <div className="flex flex-col gap-6 animate-in fade-in-50">
+                {/* User Banner */}
+                {user.banner && (
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden">
+                    <img 
+                      src={user.banner}
+                      alt={`${user.username}'s banner`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                {/* User Profile */}
+                <div className={`flex items-start gap-4 p-4 bg-card rounded-lg border ${
+                  user.accentColor ? `border-[#${user.accentColor.toString(16)}]/20` : ''
+                }`}>
+                  <div className="relative">
                     {user.avatar ? (
                       <img 
                         src={user.avatar}
                         alt={`${user.username}'s avatar`}
-                        className="w-24 h-24 rounded-full"
+                        className={`w-20 h-20 rounded-full ${
+                          user.accentColor ? `ring-2 ring-[#${user.accentColor.toString(16)}]/50` : ''
+                        }`}
+                        loading="lazy"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center">
-                        <span className="text-2xl text-accent">{user.username[0]}</span>
+                      <div className={`w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold ${
+                        user.accentColor ? `ring-2 ring-[#${user.accentColor.toString(16)}]/50` : ''
+                      }`}>
+                        {user.username.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <Button
-                      onClick={() => {
-                        navigator.clipboard.writeText(user.id);
-                        toast.success('User ID copied to clipboard!');
-                      }}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Copy ID
-                    </Button>
                   </div>
-                  <div className="flex-1">
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold flex items-center gap-2">
-                        {user.global_name && (
-                          <span className="font-medium">{user.global_name}</span>
-                        )}
-                        <span className="text-muted-foreground">
-                          {user.username}
-                          {user.discriminator !== '0' && `#${user.discriminator}`}
+
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-xl font-semibold">{user.username}</h3>
+                      {user.bot && (
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/10 text-blue-500 cursor-pointer hover:bg-blue-500/20"
+                          onClick={() => handlePillClick("Bot Account", "account type")}
+                        >
+                          Bot
                         </span>
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-sm font-medium">Account Created:</span>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(user.createdAt), 'PPP')}
-                          </p>
-                        </div>
-                        {user.banner && (
-                          <div>
-                            <span className="text-sm font-medium">Profile Banner:</span>
-                            <img 
-                              src={user.banner}
-                              alt="Profile Banner"
-                              className="mt-1 rounded-md w-full h-32 object-cover"
-                            />
-                          </div>
-                        )}
-                      </div>
+                      )}
+                      {user.verified && (
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-500 cursor-pointer hover:bg-green-500/20"
+                          onClick={() => handlePillClick("Verified Bot", "verification status")}
+                        >
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="font-medium">ID:</span> 
+                        <code 
+                          className="bg-muted px-2 py-0.5 rounded text-xs cursor-pointer hover:bg-muted/80"
+                          onClick={() => handlePillClick(user.id, "user ID")}
+                        >
+                          {user.id}
+                        </code>
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Badges Card */}
-                {user.flags && getUserFlags(user.flags).length > 0 && (
-                  <div className="p-4 bg-card rounded-lg border">
-                    <h4 className="text-sm font-medium mb-3">Profile Badges</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {getUserFlags(user.flags).map(flag => (
-                        <Badge key={flag} variant="secondary" className="capitalize">
-                          {flag.toLowerCase().replace(/_/g, ' ')}
-                        </Badge>
-                      ))}
+                {/* User Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    {/* Account Type */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Account Type</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
+                          {user.bot ? 'Bot Account' : 'User Account'}
+                        </span>
+                        {user.verified && user.bot && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-500">
+                            Verified Bot
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Account Age */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Account Created</h4>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
+                        {new Date(Number(BigInt(user.id) >> 22n) + 1420070400000).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
-                )}
 
-                {/* Bot Info Card */}
-                {user.bot && (
-                  <div className="p-4 bg-card rounded-lg border">
-                    <h4 className="text-sm font-medium mb-2">Bot Account</h4>
-                    <p className="text-sm text-muted-foreground">
-                      This is a bot account. {'verified' in user && user.verified && 'This bot is verified by Discord.'}
-                    </p>
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    {/* Accent Color */}
+                    {user.accentColor && (
+                      <div className="p-4 bg-card rounded-lg border">
+                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Profile Color</h4>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground gap-2">
+                          <span 
+                            className="w-4 h-4 rounded-full inline-block"
+                            style={{ backgroundColor: `#${user.accentColor.toString(16)}` }}
+                          />
+                          #{user.accentColor.toString(16).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* User Badges */}
+                    {user.flags > 0 && (
+                      <div className="p-4 bg-card rounded-lg border">
+                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Badges</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {getUserFlags(user.flags).map((flag) => (
+                            <span 
+                              key={flag} 
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground cursor-pointer hover:bg-accent/20"
+                              onClick={() => handlePillClick(flag, "badge")}
+                            >
+                              {flag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
-            )}
-          </div>
-        </Card>
-      </div>
+
+              {/* Raw Data Button */}
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRawData(true)}
+                >
+                  View Raw Data
+                </Button>
+              </div>
+            </>
+          )}
+
+          <JsonViewer
+            data={user}
+            title="Raw User Data"
+            open={showRawData}
+            onOpenChange={setShowRawData}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export default function UserLookup() {
+  return (
+    <>
+      <MetaTags 
+        title="Discord User Lookup"
+        description="Look up Discord users by their ID."
+        path="/users"
+      />
+      <ErrorBoundary>
+        <UserLookupContent />
+      </ErrorBoundary>
     </>
   );
 }
