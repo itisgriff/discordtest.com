@@ -1,0 +1,5 @@
+# Required: Your Discord bot token for API access
+DISCORD_BOT_TOKEN=your_token_here
+
+# Optional: Environment setting (defaults to development)
+ENVIRONMENT=development 

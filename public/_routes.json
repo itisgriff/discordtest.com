@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "include": ["/"],
+  "exclude": ["/api/*"],
+  "routes": [
+    {
+      "src": "^/vanity/.*",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/lookup/.*",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/vanity$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/lookup$",
+      "dest": "/index.html"
+    }
+  ]
+} 
