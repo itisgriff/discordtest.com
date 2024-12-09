@@ -1,200 +1,142 @@
-# DiscordTest - Discord Management Tools
+# Discord Tools
 
-A modern, feature-rich web application providing essential Discord server management utilities.
+A modern web application for Discord server management and vanity URL checking. Built with Cloudflare Workers and Pages.
 
-## Project Overview
+## Features
 
-### Core Purpose
-DiscordTest offers a suite of tools designed to simplify Discord server management and user verification tasks. Built with modern web technologies, it provides a seamless interface for common Discord administrative functions.
+### Vanity URL Checker
+- Check availability of Discord vanity URLs in real-time
+- View server information for taken vanity URLs
+- Rate limiting to prevent API abuse
+- Caching for improved performance
 
-### Key Features
-- **Vanity URL Checker**: Verify availability of custom Discord server URLs
-- **User Lookup Tool**: Comprehensive Discord user profile information
-- **Modern UI/UX**: Responsive design with dark mode and smooth animations
+### User Lookup
+- Look up Discord users by ID
+- View user profiles, avatars, and badges
+- Cached responses for faster lookups
 
-### Target Audience
-- Discord Server Administrators
-- Community Managers
-- Moderation Teams
-- Server Owners
+## Tech Stack
 
-## Technical Architecture
+### Frontend (Pages)
+- React + TypeScript
+- Vite for building
+- TailwindCSS for styling
+- React Query for data fetching
+- Cloudflare Pages for hosting
 
-### Technology Stack
-- **Frontend Framework**: React 19 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Icons**: Lucide React
-- **Routing**: React Router DOM
-- **Form Handling**: React Hook Form
-- **Date Formatting**: date-fns
-- **Type Validation**: Zod
+### Backend (Workers)
+- TypeScript
+- Hono.js for routing and middleware
+- Cloudflare Workers for serverless functions
+- Cloudflare KV for rate limiting
+- Cache API for response caching
 
-### System Requirements
+## Architecture
+
+The application is split into two main parts:
+
+1. Frontend (`/src`)
+   - Single Page Application (SPA)
+   - Modern, responsive UI
+   - Real-time validation and feedback
+   - Error handling and loading states
+
+2. Backend (`/server`)
+   - RESTful API endpoints
+   - Discord API integration
+   - Rate limiting and caching
+   - Error handling and validation
+
+## API Endpoints
+
+### Vanity URLs
+- `POST /api/vanity/:code`
+  - Check vanity URL availability
+  - Returns server info if URL is taken
+
+### User Lookup
+- `GET /api/users/:id`
+  - Look up Discord user by ID
+  - Returns user profile information
+
+## Getting Started
+
+### Prerequisites
 - Node.js 18+
-- npm 7+
-- Modern web browser with JavaScript enabled
+- npm or yarn
+- Cloudflare account
+- Discord Bot Token
 
-### Project Structure
-```
-src/
-├── components/         # Reusable UI components
-│   ├── layout/        # Layout components
-│   └── ui/            # shadcn/ui components
-├── hooks/             # Custom React hooks
-├── lib/              # Utility functions and API
-├── pages/            # Page components
-└── types/            # TypeScript type definitions
-```
-
-## Implementation Details
-
-### Key Components
-
-#### Vanity URL Checker
-```typescript
-// src/lib/api.ts
-async function checkVanityUrl(code: string): Promise<VanityUrlResponse>
-```
-- Validates vanity URL availability
-- Implements rate limiting and error handling
-- Returns availability status and error messages
-
-#### User Lookup
-```typescript
-// src/lib/api.ts
-async function lookupUser(username: string): Promise<DiscordUser | null>
-```
-- Fetches comprehensive user profile data
-- Handles non-existent users and API errors
-- Returns formatted user information
-
-### Data Models
-
-```typescript
-interface DiscordUser {
-  id: string;
-  username: string;
-  avatar: string | null;
-  banner: string | null;
-  accentColor: number | null;
-  createdAt: Date;
-  badges: string[];
-}
-
-interface VanityUrlResponse {
-  code: string;
-  available: boolean;
-  error?: string;
-}
-```
-
-## Setup and Installation
+### Local Development
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/discord-test.git
-cd discord-test
+git clone https://github.com/yourusername/discord-tools.git
+cd discord-tools
 ```
 
 2. Install dependencies:
 ```bash
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd server
 npm install
 ```
 
-3. Start development server:
+3. Set up environment variables:
 ```bash
+# In /server/.dev.vars
+DISCORD_BOT_TOKEN=your_token_here
+
+# In /.env
+VITE_API_URL=http://localhost:8787/api
+```
+
+4. Start development servers:
+```bash
+# Start backend (in /server)
+npx wrangler dev
+
+# Start frontend (in root)
 npm run dev
 ```
 
-4. Build for production:
-```bash
-npm run build
-```
+## Deployment
 
-## Usage Guidelines
+See [Cloudflare Deployment Guide](docs/cloudflare-deployment.md) for detailed deployment instructions.
 
-### Vanity URL Checker
-1. Navigate to the Vanity URL page
-2. Enter desired vanity URL
-3. System will check availability and display status
-4. Handle any error messages or validation requirements
+### Quick Deploy
+1. Backend: `npx wrangler deploy --config server/wrangler.toml`
+2. Frontend: Push to main branch (auto-deploys via Pages)
 
-### User Lookup
-1. Access the User Lookup page
-2. Enter Discord username
-3. View comprehensive user profile information
-4. Note any rate limiting or API restrictions
+## Rate Limiting
 
-## Production Deployment
+- Development: In-memory rate limiting
+- Production: Cloudflare KV-based rate limiting
+- 5 requests per 5 seconds per IP
+- Cached responses for 60 seconds
 
-### API Integration
-Replace the mock API calls in `src/lib/api.ts` with actual Discord API endpoints:
+## Caching
 
-```typescript
-// Current development implementation
-export async function checkVanityUrl(code: string) {
-  // Replace with actual Discord API call
-  const response = await fetch(`${DISCORD_API_URL}/guilds/${GUILD_ID}/vanity-url`, {
-    headers: {
-      Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-    },
-  });
-  return response.json();
-}
+- Discord API responses cached using Cloudflare's Cache API
+- Cache TTL: 60 seconds
+- Separate caches for vanity URLs and user lookups
 
-// Current development implementation
-export async function lookupUser(username: string) {
-  // Replace with actual Discord API call
-  const response = await fetch(`${DISCORD_API_URL}/users/${username}`, {
-    headers: {
-      Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-    },
-  });
-  return response.json();
-}
-```
+## Contributing
 
-### Environment Variables
-Create a `.env` file with required Discord API credentials:
-```
-VITE_DISCORD_API_URL=https://discord.com/api/v10
-VITE_DISCORD_BOT_TOKEN=your_bot_token
-VITE_GUILD_ID=your_guild_id
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Rate Limiting
-Implement proper rate limiting according to Discord's API guidelines:
-- Global rate limit: 50 requests per second
-- User lookup: 120 requests per minute
-- Vanity URL checks: 5 requests per 5 seconds
+## License
 
-### Error Handling
-Enhance error handling for production:
-```typescript
-interface ApiError {
-  message: string;
-  code: number;
-}
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-function handleApiError(error: ApiError) {
-  switch (error.code) {
-    case 429: // Rate limit
-      return 'Too many requests. Please try again later.';
-    case 404:
-      return 'Resource not found.';
-    default:
-      return 'An unexpected error occurred.';
-  }
-}
-```
+## Acknowledgments
 
-## Security Considerations
-
-1. Never expose API tokens in client-side code
-2. Implement proper CORS headers
-3. Use rate limiting on both client and server
-4. Sanitize user inputs
-5. Implement proper error boundaries
-6. Use HTTPS for all API calls
+- Built with [Cloudflare Workers](https://workers.cloudflare.com/)
+- Powered by [Discord API](https://discord.com/developers/docs/)
