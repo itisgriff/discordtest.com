@@ -11,7 +11,7 @@ const vanityCodeSchema = z.object({
     .regex(/^[a-zA-Z0-9-]+$/, 'Vanity URL can only contain letters, numbers, and hyphens')
 });
 
-const createErrorResponse = (error: string, status: StatusCode = 500): VanityUrlResponse => ({
+const createErrorResponse = (error: string): VanityUrlResponse => ({
   error,
   available: false,
   guild: null
@@ -35,7 +35,7 @@ export async function checkVanityUrl(c: Context) {
     const result = vanityCodeSchema.safeParse({ code });
     if (!result.success) {
       return c.json<VanityUrlResponse>(
-        createErrorResponse(result.error.errors[0].message, 400 as StatusCode),
+        createErrorResponse(result.error.errors[0].message),
         400 as StatusCode
       );
     }
@@ -73,7 +73,7 @@ export async function checkVanityUrl(c: Context) {
         // Handle rate limit errors specifically
         if (error.message.includes('Rate limited')) {
           return c.json<VanityUrlResponse>(
-            createErrorResponse(error.message, 429 as StatusCode),
+            createErrorResponse(error.message),
             429 as StatusCode
           );
         }
