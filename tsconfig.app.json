@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "moduleDetection": "force"
-  },
-  "references": [{ "path": "./tsconfig.node.json" }]
-}
