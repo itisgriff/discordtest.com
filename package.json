@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "cross-env NODE_ENV=development node --import tsx server/index.ts",
-    "build": "tsc && vite build",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
     "build:worker": "tsc -p server/tsconfig.json",
     "deploy:worker": "wrangler deploy",
     "lint": "eslint .",
