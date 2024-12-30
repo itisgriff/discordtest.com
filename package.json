@@ -8,10 +8,12 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:worker": "wrangler dev --config server/wrangler.toml",
     "dev:server": "cross-env NODE_ENV=development node --import tsx server/index.ts",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
-    "build:worker": "tsc -p server/tsconfig.json",
-    "deploy:worker": "wrangler deploy",
+    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec tsc -p tsconfig.node.json --noEmit && pnpm exec tsc -p server/tsconfig.json --noEmit",
+    "build": "pnpm typecheck && vite build",
+    "build:worker": "pnpm typecheck && tsc -p server/tsconfig.json",
+    "deploy:worker": "pnpm build:worker && wrangler deploy --config server/wrangler.toml",
     "lint": "eslint .",
     "preview": "vite preview"
   },
