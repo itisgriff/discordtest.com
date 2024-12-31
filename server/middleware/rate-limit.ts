@@ -1,12 +1,11 @@
 import { Context, Next } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { StatusCode } from 'hono/utils/http-status';
 
 interface RateLimitOptions {
   windowMs: number;
   max: number;
   message?: string;
-  statusCode?: StatusCode;
+  statusCode?: number;
   keyGenerator?: (ctx: Context) => string;
 }
 
@@ -71,7 +70,7 @@ class RateLimiter {
       if (info.count > this.options.max) {
         const retryAfter = Math.ceil((info.resetTime - now) / 1000);
         ctx.header('Retry-After', retryAfter.toString());
-        throw new HTTPException(this.options.statusCode as StatusCode, { message: this.options.message });
+        throw new HTTPException(429, { message: this.options.message });
       }
 
       return next();
