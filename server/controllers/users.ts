@@ -1,5 +1,4 @@
 import { Context } from 'hono';
-import { StatusCode } from 'hono/utils/http-status';
 import { DiscordService } from '../services/discord';
 import { z } from 'zod';
 
@@ -25,7 +24,7 @@ export async function lookupUser(c: Context) {
       console.log('Validation failed:', result.error.errors[0].message);
       return c.json(
         createErrorResponse(result.error.errors[0].message),
-        400 as StatusCode
+        400
       );
     }
 
@@ -39,14 +38,14 @@ export async function lookupUser(c: Context) {
         if (error.message.includes('Rate limited')) {
           return c.json(
             createErrorResponse(error.message),
-            429 as StatusCode
+            429
           );
         }
         // Handle user not found
         if (error.message.includes('404')) {
           return c.json(
             createErrorResponse('User not found'),
-            404 as StatusCode
+            404
           );
         }
       }
@@ -57,7 +56,7 @@ export async function lookupUser(c: Context) {
     console.error('User lookup error:', errorMessage);
     return c.json(
       createErrorResponse('Failed to lookup user'),
-      500 as StatusCode
+      500
     );
   }
 } 

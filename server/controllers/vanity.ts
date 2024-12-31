@@ -1,5 +1,4 @@
 import { Context } from 'hono';
-import { StatusCode } from 'hono/utils/http-status';
 import { DiscordService } from '../services/discord';
 import type { VanityUrlResponse, DiscordInviteResponse, UnknownInviteResponse } from '../../shared/types/discord';
 import { z } from 'zod';
@@ -36,7 +35,7 @@ export async function checkVanityUrl(c: Context) {
     if (!result.success) {
       return c.json<VanityUrlResponse>(
         createErrorResponse(result.error.errors[0].message),
-        400 as StatusCode
+        400
       );
     }
 
@@ -54,7 +53,7 @@ export async function checkVanityUrl(c: Context) {
       if (!isDiscordInviteResponse(data) || !data.guild) {
         return c.json<VanityUrlResponse>(
           createErrorResponse('Invalid response from Discord API'),
-          500 as StatusCode
+          500
         );
       }
 
@@ -74,7 +73,7 @@ export async function checkVanityUrl(c: Context) {
         if (error.message.includes('Rate limited')) {
           return c.json<VanityUrlResponse>(
             createErrorResponse(error.message),
-            429 as StatusCode
+            429
           );
         }
         // For vanity URL checks, a 404 means the URL is available
@@ -90,14 +89,14 @@ export async function checkVanityUrl(c: Context) {
       console.error('Vanity check error:', error instanceof Error ? error.message : 'Unknown error');
       return c.json<VanityUrlResponse>(
         createErrorResponse('Failed to check vanity URL'),
-        500 as StatusCode
+        500
       );
     }
   } catch (error) {
     console.error('Vanity check error:', error instanceof Error ? error.message : 'Unknown error');
     return c.json<VanityUrlResponse>(
       createErrorResponse('Failed to check vanity URL'),
-      500 as StatusCode
+      500
     );
   }
 } 
