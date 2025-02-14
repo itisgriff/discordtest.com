@@ -1,28 +1,31 @@
 import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
-
-const API_BASE = import.meta.env.PROD 
-  ? '/api'
-  : 'http://localhost:8787/api';
-
-const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-};
+import { API_CONFIG, DISCORD_CDN } from './discord';
 
 interface ErrorResponse {
   error: string;
 }
 
-interface UserResponse {
-  user: DiscordUser;
+// Essential fields we require from the Discord API response
+interface MinimalDiscordUser {
+  id: string;
+  username: string;
 }
 
 function isErrorResponse(data: any): data is ErrorResponse {
   return 'error' in data;
 }
 
-function isUserResponse(data: any): data is UserResponse {
-  return 'user' in data && data.user && 'id' in data.user;
+function isUserResponse(data: any): boolean {
+  // Check if data has minimal required fields
+  return (
+    data &&
+    typeof data === 'object' &&
+    'id' in data &&
+    typeof data.id === 'string' &&
+    'username' in data &&
+    typeof data.username === 'string'
+  );
 }
 
 // Lookup user by ID
@@ -30,13 +33,13 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
   try {
     // Input validation
     if (!userId.match(/^\d+$/)) {
-      toast.error('Invalid user ID format');
+      toast.error("Invalid user ID format");
       return null;
     }
 
-    const response = await fetch(`${API_BASE}/users/${userId}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${userId}`, {
       method: 'GET',
-      headers: DEFAULT_HEADERS,
+      headers: API_CONFIG.HEADERS,
     });
 
     const data = await response.json();
@@ -66,25 +69,40 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
     }
 
     if (!isUserResponse(data)) {
-      console.error('Invalid API response format:', data);
-      toast.error('Invalid response format from server');
+      console.error('Missing required user data:', data);
+      toast.error('Incomplete user data received');
       return null;
     }
 
-    const user = data.user;
+    // Type assertion since we know the shape but want to be flexible about presence
+    const fullUser = data as Record<string, any>;
+    
     const processedUser: DiscordUser = {
-      id: user.id,
-      username: user.username,
-      avatar: user.avatar 
-        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`
-        : null,
-      banner: user.banner
-        ? `https://cdn.discordapp.com/banners/${user.id}/${user.banner}.png?size=600`
-        : null,
-      accentColor: user.accentColor ?? null,
-      flags: user.flags ?? 0,
-      bot: user.bot ?? false,
-      verified: user.verified ?? false
+      id: fullUser.id,
+      username: fullUser.username,
+      avatar: fullUser.avatar ? DISCORD_CDN.AVATAR(fullUser.id, fullUser.avatar) : null,
+      discriminator: fullUser.discriminator ?? '0',
+      public_flags: fullUser.public_flags ?? 0,
+      flags: fullUser.flags ?? 0,
+      banner: fullUser.banner ? DISCORD_CDN.BANNER(fullUser.id, fullUser.banner) : null,
+      accent_color: fullUser.accent_color ?? null,
+      global_name: fullUser.global_name ?? null,
+      avatar_decoration_data: fullUser.avatar_decoration_data ?? null,
+      banner_color: fullUser.banner_color ?? null,
+      bot: fullUser.bot ?? false,
+      verified: fullUser.verified ?? false,
+      clan: {
+        identity_guild_id: fullUser.clan?.identity_guild_id ?? null,
+        identity_enabled: fullUser.clan?.identity_enabled ?? false,
+        tag: fullUser.clan?.tag ?? null,
+        badge: fullUser.clan?.badge ?? null
+      },
+      primary_guild: {
+        identity_guild_id: fullUser.primary_guild?.identity_guild_id ?? null,
+        identity_enabled: fullUser.primary_guild?.identity_enabled ?? false,
+        tag: fullUser.primary_guild?.tag ?? null,
+        badge: fullUser.primary_guild?.badge ?? null
+      }
     };
     return processedUser;
   } catch (error) {

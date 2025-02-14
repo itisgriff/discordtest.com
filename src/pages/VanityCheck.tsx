@@ -24,7 +24,8 @@ export default function VanityCheck() {
   const [rawApiResponse, setRawApiResponse] = useState<unknown>(null);
 
   useEffect(() => {
-    if (urlCode) {
+    if (urlCode && urlCode !== code) {
+      setCode(urlCode);
       handleCheck(urlCode);
     }
   }, [urlCode]);
@@ -36,7 +37,7 @@ export default function VanityCheck() {
       return;
     }
 
-    // Update URL if it doesn't match the current code
+    // Update URL if needed, but don't return early
     if (!checkCode && vanityCode !== urlCode) {
       navigate(`/vanity/${vanityCode}`);
     }

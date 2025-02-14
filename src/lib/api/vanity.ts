@@ -1,15 +1,27 @@
 import { VanityUrlResponse } from '@/types/discord';
-
-const API_BASE = import.meta.env.PROD 
-  ? '/api'
-  : 'http://localhost:8787/api';
-
-const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-};
+import { API_CONFIG } from './discord';
 
 interface ErrorResponse {
   error: string;
+}
+
+// Minimal required fields for guild data
+interface MinimalGuildResponse {
+  id: string;
+  name: string;
+}
+
+function isValidGuildData(data: any): data is { guild: MinimalGuildResponse } {
+  return (
+    data &&
+    typeof data === 'object' &&
+    'guild' in data &&
+    typeof data.guild === 'object' &&
+    'id' in data.guild &&
+    typeof data.guild.id === 'string' &&
+    'name' in data.guild &&
+    typeof data.guild.name === 'string'
+  );
 }
 
 // Check vanity URL availability
@@ -24,9 +36,9 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    const response = await fetch(`${API_BASE}/vanity/${code}`, {
-      method: 'POST',
-      headers: DEFAULT_HEADERS,
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vanity/${code}`, {
+      method: 'GET',
+      headers: API_CONFIG.HEADERS,
     });
 
     if (!response.ok) {
@@ -37,7 +49,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
           return {
             available: false,
             error: 'Too many requests. Please wait a moment.',
-            guild: null
+            guild: null,
+            retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
           };
         default:
           return {
@@ -50,6 +63,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
 
     const data = await response.json();
     
+    // Handle available vanity URLs
     if (data.available) {
       return {
         available: true,
@@ -58,7 +72,9 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    if (!data.guild) {
+    // Handle taken vanity URLs
+    if (!isValidGuildData(data)) {
+      console.error('Unexpected API response format:', data);
       return {
         available: false,
         error: 'Invalid response format from server',
@@ -66,33 +82,36 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
+    // Type assertion for flexible field access
+    const guildData = data.guild as Record<string, any>;
+    
     return {
       available: false,
       error: null,
       guild: {
-        id: data.guild.id,
-        name: data.guild.name,
-        approximate_member_count: data.guild.approximate_member_count,
-        approximate_presence_count: data.guild.approximate_presence_count,
-        icon: data.guild.icon 
-          ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`
+        id: guildData.id,
+        name: guildData.name,
+        approximate_member_count: guildData.approximate_member_count ?? undefined,
+        approximate_presence_count: guildData.approximate_presence_count ?? undefined,
+        icon: guildData.icon 
+          ? `https://cdn.discordapp.com/icons/${guildData.id}/${guildData.icon}.png?size=128`
           : null,
-        splash: data.guild.splash
-          ? `https://cdn.discordapp.com/splashes/${data.guild.id}/${data.guild.splash}.png?size=1024`
+        splash: guildData.splash
+          ? `https://cdn.discordapp.com/splashes/${guildData.id}/${guildData.splash}.png?size=1024`
           : null,
-        banner: data.guild.banner
-          ? `https://cdn.discordapp.com/banners/${data.guild.id}/${data.guild.banner}.png?size=1024`
+        banner: guildData.banner
+          ? `https://cdn.discordapp.com/banners/${guildData.id}/${guildData.banner}.png?size=1024`
           : null,
-        description: data.guild.description,
-        features: data.guild.features || [],
-        verification_level: data.guild.verification_level,
-        nsfw_level: data.guild.nsfw_level,
-        nsfw: data.guild.nsfw || false,
-        premium_subscription_count: data.guild.premium_subscription_count || 0,
-        channel: data.channel ? {
-          id: data.channel.id,
-          name: data.channel.name,
-          type: data.channel.type
+        description: guildData.description ?? null,
+        features: guildData.features ?? [],
+        verification_level: guildData.verification_level ?? 0,
+        nsfw_level: guildData.nsfw_level ?? 0,
+        nsfw: guildData.nsfw ?? false,
+        premium_subscription_count: guildData.premium_subscription_count ?? 0,
+        channel: (data as any).channel ? {
+          id: (data as any).channel.id,
+          name: (data as any).channel.name,
+          type: (data as any).channel.type
         } : undefined
       }
     };
