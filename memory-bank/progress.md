@@ -8,12 +8,12 @@
 - Development and preview environments configured correctly
 - Double API call issues resolved for both user lookup and vanity check
 - URL-driven state management implemented
+- Deploy to production
 
 ## What's Left to Build
 - Set up proper environment variables for production
 - Implement comprehensive error handling
 - Add additional testing
-- Deploy to production
 
 ## Current Status
 - API routes are working correctly in both development and preview environments
