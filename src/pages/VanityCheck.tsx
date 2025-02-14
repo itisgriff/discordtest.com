@@ -37,10 +37,9 @@ export default function VanityCheck() {
       return;
     }
 
-    // Only update URL if we're not already on this vanity's page
+    // Update URL if needed, but don't return early
     if (!checkCode && vanityCode !== urlCode) {
       navigate(`/vanity/${vanityCode}`);
-      return; // Let the useEffect handle the actual check
     }
 
     setLoading(true);

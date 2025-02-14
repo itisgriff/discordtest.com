@@ -35,10 +35,9 @@ function UserLookupContent() {
       return;
     }
 
-    // Only update URL if we're not already on this user's page
+    // Update URL if needed, but don't return early
     if (!id && lookupId !== urlUserId) {
       navigate(`/lookup/${lookupId}`);
-      return; // Let the useEffect handle the actual lookup
     }
 
     setLoading(true);
