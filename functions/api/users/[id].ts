@@ -9,7 +9,11 @@ const userIdSchema = z.object({
     .regex(/^\d+$/, 'Discord user ID must be numeric')
 });
 
-export const onRequestGet = async ({ params }: { params: { id: string } }) => {
+interface Env {
+  DISCORD_BOT_TOKEN: string;
+}
+
+export const onRequestGet = async ({ params, env }: { params: { id: string }, env: Env }) => {
   try {
     const { id } = params;
 
@@ -20,7 +24,7 @@ export const onRequestGet = async ({ params }: { params: { id: string } }) => {
     }
 
     try {
-      const user = await DiscordService.lookupUser(id);
+      const user = await DiscordService.lookupUser(id, env);
       return createJsonResponse({ error: null, user });
     } catch (error) {
       if (error instanceof Error) {

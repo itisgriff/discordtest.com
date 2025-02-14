@@ -8,7 +8,7 @@
     "build": "vite build",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec tsc -p tsconfig.node.json --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "pnpm run build && pnpm dlx wrangler pages dev dist",
     "deploy": "pnpm build && wrangler pages deploy dist"
   },
   "dependencies": {
