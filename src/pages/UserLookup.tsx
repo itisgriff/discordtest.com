@@ -22,7 +22,8 @@ function UserLookupContent() {
 
   // Effect to handle URL parameter changes
   useEffect(() => {
-    if (urlUserId) {
+    if (urlUserId && urlUserId !== userId) {
+      setUserId(urlUserId);
       handleLookup(urlUserId);
     }
   }, [urlUserId]);
@@ -34,7 +35,7 @@ function UserLookupContent() {
       return;
     }
 
-    // Update URL if it doesn't match the current ID
+    // Update URL if needed, but don't return early
     if (!id && lookupId !== urlUserId) {
       navigate(`/lookup/${lookupId}`);
     }
@@ -53,6 +54,12 @@ function UserLookupContent() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserId(value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !loading) {
+      handleLookup();
+    }
   };
 
   const handlePillClick = (text: string, label: string) => {
@@ -89,6 +96,7 @@ function UserLookupContent() {
               placeholder="Enter user ID"
               value={userId}
               onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               disabled={loading}
               className="flex-1"
               aria-label="User ID input"
@@ -127,7 +135,7 @@ function UserLookupContent() {
 
                 {/* User Profile */}
                 <div className={`flex items-start gap-4 p-4 bg-card rounded-lg border ${
-                  user.accentColor ? `border-[#${user.accentColor.toString(16)}]/20` : ''
+                  user.accent_color ? `border-[#${user.accent_color.toString(16)}]/20` : ''
                 }`}>
                   <div className="relative">
                     {user.avatar ? (
@@ -135,13 +143,13 @@ function UserLookupContent() {
                         src={user.avatar}
                         alt={`${user.username}'s avatar`}
                         className={`w-20 h-20 rounded-full ${
-                          user.accentColor ? `ring-2 ring-[#${user.accentColor.toString(16)}]/50` : ''
+                          user.accent_color ? `ring-2 ring-[#${user.accent_color.toString(16)}]/50` : ''
                         }`}
                         loading="lazy"
                       />
                     ) : (
                       <div className={`w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold ${
-                        user.accentColor ? `ring-2 ring-[#${user.accentColor.toString(16)}]/50` : ''
+                        user.accent_color ? `ring-2 ring-[#${user.accent_color.toString(16)}]/50` : ''
                       }`}>
                         {user.username.charAt(0).toUpperCase()}
                       </div>
@@ -214,15 +222,15 @@ function UserLookupContent() {
                   {/* Right Column */}
                   <div className="space-y-4">
                     {/* Accent Color */}
-                    {user.accentColor && (
+                    {user.accent_color && (
                       <div className="p-4 bg-card rounded-lg border">
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Profile Color</h4>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground gap-2">
                           <span 
                             className="w-4 h-4 rounded-full inline-block"
-                            style={{ backgroundColor: `#${user.accentColor.toString(16)}` }}
+                            style={{ backgroundColor: `#${user.accent_color.toString(16)}` }}
                           />
-                          #{user.accentColor.toString(16).toUpperCase()}
+                          #{user.accent_color.toString(16).toUpperCase()}
                         </span>
                       </div>
                     )}
