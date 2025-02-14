@@ -1,12 +1,5 @@
 import { VanityUrlResponse } from '@/types/discord';
-
-const API_BASE = import.meta.env.PROD 
-  ? '/api'
-  : 'http://localhost:8787/api';
-
-const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-};
+import { API_CONFIG } from './discord';
 
 interface ErrorResponse {
   error: string;
@@ -24,9 +17,9 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    const response = await fetch(`${API_BASE}/vanity/${code}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/vanity/${code}`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: API_CONFIG.HEADERS,
     });
 
     if (!response.ok) {

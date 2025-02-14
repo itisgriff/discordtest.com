@@ -4,20 +4,18 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:worker": "wrangler dev --config server/wrangler.toml",
-    "dev:server": "cross-env NODE_ENV=development node --import tsx server/index.ts",
-    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec tsc -p tsconfig.node.json --noEmit && pnpm exec tsc -p server/tsconfig.json --noEmit",
+    "dev": "wrangler pages dev --proxy 5173 -- pnpm vite",
     "build": "pnpm typecheck && vite build",
-    "build:worker": "pnpm typecheck && tsc -p server/tsconfig.json",
-    "deploy:worker": "pnpm build:worker && wrangler deploy --config server/wrangler.toml",
+    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec tsc -p tsconfig.node.json --noEmit",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "pnpm build && wrangler pages deploy dist"
   },
   "dependencies": {
     "@hono/node-server": "1.13.7",
     "@radix-ui/react-toast": "^1.2.6",
     "class-variance-authority": "^0.7.1",
+    "cloudflare": "^4.1.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
