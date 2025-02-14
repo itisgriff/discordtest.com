@@ -10,7 +10,11 @@ const vanityCodeSchema = z.object({
     .regex(/^[a-zA-Z0-9-]+$/, 'Vanity URL can only contain letters, numbers, and hyphens')
 });
 
-export const onRequestPost = async ({ params }: { params: { code: string } }) => {
+interface Env {
+  DISCORD_BOT_TOKEN: string;
+}
+
+export const onRequestPost = async ({ params, env }: { params: { code: string }, env: Env }) => {
   try {
     const { code } = params;
 
@@ -20,7 +24,7 @@ export const onRequestPost = async ({ params }: { params: { code: string } }) =>
       return createErrorResponse(result.error.errors[0].message, 400);
     }
 
-    const data = await DiscordService.checkInvite(code);
+    const data = await DiscordService.checkInvite(code, env);
     
     if ('message' in data && data.message === 'Unknown Invite') {
       return createJsonResponse<VanityUrlResponse>({
