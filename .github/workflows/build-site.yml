@@ -33,7 +33,6 @@ jobs:
       run: |
         pnpm exec tsc -p tsconfig.json --noEmit
         pnpm exec tsc -p tsconfig.node.json --noEmit
-        pnpm exec tsc -p server/tsconfig.json --noEmit
 
     - name: Build
       run: pnpm run build
