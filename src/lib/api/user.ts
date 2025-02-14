@@ -6,12 +6,6 @@ interface ErrorResponse {
   error: string;
 }
 
-// Essential fields we require from the Discord API response
-interface MinimalDiscordUser {
-  id: string;
-  username: string;
-}
-
 function isErrorResponse(data: any): data is ErrorResponse {
   return 'error' in data;
 }
