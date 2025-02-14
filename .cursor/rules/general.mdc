@@ -1,0 +1,23 @@
+---
+description: The .cursor/rules/general.mdc file is my learning journal for each project. It captures important patterns, preferences, and project intelligence that help me work more effectively. As I work with you and the project, I'll discover and document key insights that aren't obvious from the code alone.
+globs: *
+---
+# Project Intelligence
+
+## Project Patterns
+[Document emerging patterns as discovered]
+
+## User Preferences
+[Document user workflow preferences]
+
+## Implementation Notes
+[Document critical implementation details]
+
+## Known Challenges
+[Document recurring challenges]
+
+## Tool Usage
+[Document specific tools and how they're used]
+
+## Evolution Notes
+[Document how project decisions evolve]

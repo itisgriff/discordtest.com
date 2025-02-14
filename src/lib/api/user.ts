@@ -1,13 +1,6 @@
 import { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
-
-const API_BASE = import.meta.env.PROD 
-  ? '/api'
-  : 'http://localhost:8787/api';
-
-const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-};
+import { API_CONFIG, DISCORD_CDN } from './discord';
 
 interface ErrorResponse {
   error: string;
@@ -34,9 +27,9 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
       return null;
     }
 
-    const response = await fetch(`${API_BASE}/users/${userId}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${userId}`, {
       method: 'GET',
-      headers: DEFAULT_HEADERS,
+      headers: API_CONFIG.HEADERS,
     });
 
     const data = await response.json();
@@ -75,12 +68,8 @@ export async function lookupUser(userId: string): Promise<DiscordUser | null> {
     const processedUser: DiscordUser = {
       id: user.id,
       username: user.username,
-      avatar: user.avatar 
-        ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${user.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`
-        : null,
-      banner: user.banner
-        ? `https://cdn.discordapp.com/banners/${user.id}/${user.banner}.png?size=600`
-        : null,
+      avatar: user.avatar ? DISCORD_CDN.AVATAR(user.id, user.avatar) : null,
+      banner: user.banner ? DISCORD_CDN.BANNER(user.id, user.banner) : null,
       accentColor: user.accentColor ?? null,
       flags: user.flags ?? 0,
       bot: user.bot ?? false,
