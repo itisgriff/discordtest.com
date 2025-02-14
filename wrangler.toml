@@ -6,10 +6,5 @@ compatibility_date = "2025-02-14"
 [vars]
 DISCORD_BOT_TOKEN = "REDACTED"  # For local development, this will be overridden by .env
 
-[env.production.vars]
-vars = { DISCORD_BOT_TOKEN = "" }  # For production, set this in Cloudflare dashboard
-
-
-
 # [env.production.vars]
 # DISCORD_BOT_TOKEN = "REDACTED"

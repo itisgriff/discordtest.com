@@ -2,22 +2,35 @@
 description: The .cursor/rules/general.mdc file is my learning journal for each project. It captures important patterns, preferences, and project intelligence that help me work more effectively. As I work with you and the project, I'll discover and document key insights that aren't obvious from the code alone.
 globs: *
 ---
-# Project Intelligence
 
-## Project Patterns
-[Document emerging patterns as discovered]
+## API Routing Configuration
+- Port 8788 is used for both development and preview environments
+- API routes must be explicitly configured in _routes.json with allowed methods
+- API routes should not be in the exclude list of _routes.json
+- Preview environment requires using wrangler pages dev with the dist directory
 
-## User Preferences
-[Document user workflow preferences]
+## Development Workflow
+- Build and preview command: `pnpm run build && pnpm dlx wrangler pages dev dist --port 8788`
+- API endpoints are handled by Cloudflare Functions
+- Frontend routes are handled by the SPA configuration
 
-## Implementation Notes
-[Document critical implementation details]
+## API Response Handling
+- Use minimal type checking for essential fields only (id, username for users; id, name for guilds)
+- Handle optional fields with nullish coalescing for safe defaults
+- Type assertions used for flexible field access
+- Discord API returns user data directly, not wrapped in a 'user' property
+- This approach maintains stability when Discord API changes
+- Rate limiting handled with Retry-After header parsing
+- Consistent error handling across all API endpoints
 
-## Known Challenges
-[Document recurring challenges]
-
-## Tool Usage
-[Document specific tools and how they're used]
-
-## Evolution Notes
-[Document how project decisions evolve]
+## Frontend Patterns
+- Prevent double API calls by letting URL changes trigger the data fetch
+- Manual actions update URL, useEffect handles the actual API call
+- Check for state changes before triggering effects
+- Maintain consistent property names between API and frontend types
+- Handle both button clicks and Enter key consistently
+- Only trigger useEffect when URL params differ from current state
+- State updates should be driven by URL parameter changes
+- Input handlers should only update local state
+- Navigation updates should be handled separately from data fetching
+- Form submissions should update URL and let useEffect handle the API call

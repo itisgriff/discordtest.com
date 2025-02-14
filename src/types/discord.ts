@@ -33,11 +33,18 @@ export interface DiscordUser {
   id: string;
   username: string;
   avatar: string | null;
-  banner: string | null;
-  accentColor: number | null;
+  discriminator: string;
+  public_flags: number;
   flags: number;
+  banner: string | null;
+  accent_color: number | null;
+  global_name: string | null;
+  avatar_decoration_data: any | null;
+  banner_color: string | null;
   bot?: boolean;
   verified?: boolean;
+  clan: ClanInfo;
+  primary_guild: ClanInfo;
 }
 
 export interface ApiError {

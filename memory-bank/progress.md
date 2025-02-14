@@ -1,22 +1,29 @@
-# Project Progress
+# Progress
 
-## Completed Features
-- [Feature 1]
-- [Feature 2]
+## What Works
+- Frontend implementation is complete
+- API endpoint structure is defined and working
+- Discord API integration code is implemented
+- API routing configuration fixed and tested
+- Development and preview environments configured correctly
+- Double API call issues resolved for both user lookup and vanity check
+- URL-driven state management implemented
 
-## In Progress
-- [Current work]
+## What's Left to Build
+- Set up proper environment variables for production
+- Implement comprehensive error handling
+- Add additional testing
+- Deploy to production
 
-## Upcoming
-- [Next items]
+## Current Status
+- API routes are working correctly in both development and preview environments
+- Frontend components properly handle URL state and API calls
+- Key fixes implemented:
+  1. Removed `/api/*` from exclude list in _routes.json
+  2. Added explicit methods to API routes
+  3. Updated preview script to use correct port (8788)
+  4. Implemented URL-driven API calls to prevent duplicates
+  5. Added consistent Enter key handling across components
 
 ## Known Issues
-- [Issue 1]
-- [Issue 2]
-
-## Milestones
-- [Milestone 1]: [Status]
-- [Milestone 2]: [Status]
-
-## Blockers
-[Document any blocking issues] 
+None currently - previous API routing and double API call issues have been resolved 
