@@ -4,12 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev --proxy 5173 -- pnpm vite",
     "build": "vite build",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec tsc -p tsconfig.node.json --noEmit",
     "lint": "eslint .",
-    "preview": "pnpm run build && pnpm dlx wrangler pages dev dist",
-    "deploy": "pnpm build && wrangler pages deploy dist"
+    "preview": "pnpm run build && pnpm dlx wrangler pages dev dist --port 8788"
   },
   "dependencies": {
     "@hono/node-server": "1.13.7",
@@ -34,7 +32,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250204.0",
     "@types/lodash": "^4.17.15",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.8",

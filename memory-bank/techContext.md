@@ -1,34 +1,22 @@
 # Technical Context
 
-## Technology Stack
-- Frontend: [To be specified based on existing implementation]
-- Backend: Cloudflare Pages with Functions (migrating from Workers)
-- Infrastructure: Cloudflare Pages
+## Technologies Used
+- Cloudflare Pages (Hosting/Deployment)
+- Hono (Backend Framework)
+- Zod (Schema Validation)
+- Discord API v10
 
-## Development Environment
-- Cloudflare Pages development tools
-- Local development setup for Functions
-- Discord API development tools
-
-## Dependencies
-- Cloudflare Pages
-- Cloudflare Functions
-- Discord API
-- [Additional frontend dependencies to be specified]
+## Development Setup
+- Cloudflare Pages Functions for backend API
+- Existing frontend (not to be modified)
+- Discord Bot Token required for API requests
 
 ## Technical Constraints
-- Discord API rate limits
-- Cloudflare Pages Functions execution limits
-- Must maintain existing functionality
-- Zero downtime migration requirement
+- Must use Cloudflare Pages Functions
+- Must maintain existing frontend integration
+- Required Discord API headers:
+  - Authorization: Bot {Discord Bot Token}
+  - Content-Type: application/json
 
-## Build & Deploy
-- Deployment through Cloudflare Pages
-- Automated builds on code changes
-- Progressive migration from Workers to Functions
-
-## Testing Strategy
-- Feature parity testing with existing implementation
-- Performance comparison testing
-- Rate limit handling verification
-- Cache effectiveness testing 
+## Dependencies
+To be determined based on package.json 

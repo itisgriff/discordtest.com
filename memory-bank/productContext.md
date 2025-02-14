@@ -1,45 +1,22 @@
 # Product Context
 
-## Problem Statement
-Discord server owners need efficient tools to:
-- Check availability of vanity URLs before attempting to claim them
-- Access server information for taken vanity URLs
-- Look up user information quickly and reliably
+## Purpose
+Provide a tool for checking Discord vanity URLs and looking up Discord user information through a modern web interface
 
-## User Needs
-- Quick and reliable vanity URL availability checking
-- Efficient server information retrieval
-- Fast user profile lookups
-- Protection against API rate limits
-- Consistent and fast response times
-
-## Solution Overview
-A web application that provides:
-- Real-time vanity URL availability checking with caching
-- Server information display for taken URLs
-- User profile lookup functionality
-- Rate limit protection
-- Cloudflare-powered performance optimizations
+## Problem Space
+- Need to check availability of Discord vanity URLs
+- Need to lookup Discord user information
+- Requirement for direct deep links to checks
+- Need proper separation between frontend and API routes
 
 ## User Experience Goals
-- Maintain existing UI and user experience
-- Ensure seamless transition from worker-based to Pages-based architecture
-- Keep or improve current response times
-- Maintain reliability and uptime
+- Quick vanity URL availability checking
+- Easy Discord user information lookup
+- Support for direct links to specific checks
+- Seamless integration between frontend and backend
 
-## Key Features
-- Vanity URL availability checker
-  - Real-time checking
-  - Server info display
-  - Rate limit protection
-  - Response caching
-- User Lookup System
-  - Profile information retrieval
-  - Avatar and badge display
-  - Cached responses
-
-## Success Metrics
-- Successful migration to Cloudflare Pages with Functions
-- Maintained or improved response times
-- No degradation in user experience
-- Reduced infrastructure complexity 
+## Expected Behavior
+- API endpoints should handle requests independently of frontend routes
+- Vanity URL checks: /api/vanity/{code}
+- User lookups: /api/users/{userId}
+- Frontend routes should not interfere with API functionality 
