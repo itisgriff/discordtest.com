@@ -1,29 +1,27 @@
 # Active Context
 
 ## Current Focus
-- API routing issues resolved
-- Environment configuration stabilized
-- Frontend state management optimized
-- URL-driven data fetching implemented
+- Optimizing user experience
+- Streamlining API request flow
+- Maintaining URL-driven state management
+- Ensuring consistent behavior across components
 
 ## Recent Changes
-- Fixed API routing in _routes.json
-- Updated preview script to use port 8788
-- Configured proper method handling for API routes
-- Removed conflicting route exclusions
-- Implemented URL-driven API calls to prevent duplicates
-- Added consistent Enter key handling
-- Optimized state updates based on URL changes
+- Fixed double-enter issue in both VanityCheck and UserLookup components
+- Optimized URL-driven data fetching to trigger immediately
+- Removed early returns in handleCheck and handleLookup functions
+- Maintained URL synchronization while improving UX
+- Ensured single-action response to user input
 
 ## Next Steps
-1. Set up production environment variables
-2. Implement comprehensive error handling
-3. Add additional testing coverage
-4. Prepare for production deployment
+1. Monitor performance of new data fetching implementation
+2. Consider adding loading state indicators
+3. Test edge cases with the new implementation
+4. Consider adding input validation improvements
 
 ## Active Decisions
-- Using port 8788 for consistent development and preview environments
-- API routes explicitly configured with allowed methods
-- Frontend routes maintained through SPA configuration
-- URL parameters drive data fetching to prevent duplicate calls
-- State updates only triggered on actual URL parameter changes 
+- URL updates happen alongside API calls rather than before them
+- Single user action triggers both URL update and data fetch
+- Maintaining URL as source of truth while improving UX
+- Keeping useEffect for handling external URL changes (direct links/navigation)
+- Preserving consistent behavior between button clicks and Enter key presses 
