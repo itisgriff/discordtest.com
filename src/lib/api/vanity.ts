@@ -31,7 +31,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     if (!code.match(/^[a-zA-Z0-9-]+$/)) {
       return {
         available: false,
-        error: 'Invalid vanity URL format',
+        message: null,
+        error: 'Invalid vanity URL format. Use only letters, numbers, and hyphens.',
         guild: null
       };
     }
@@ -48,13 +49,23 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
         case 429:
           return {
             available: false,
+            message: null,
             error: 'Too many requests. Please wait a moment.',
             guild: null,
             retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
           };
+        case 404:
+          // Not found - this means the vanity is available!
+          return {
+            available: true,
+            message: `Great news! The vanity URL "discord.gg/${code}" is available for your server.`,
+            error: null,
+            guild: null
+          };
         default:
           return {
             available: false,
+            message: null,
             error: data.error || `Failed to check vanity URL: ${response.status}`,
             guild: null
           };
@@ -67,7 +78,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     if (data.available) {
       return {
         available: true,
-        error: `The vanity URL "discord.com/invite/${code}" is available! You can use it for your server.`,
+        message: `Great news! The vanity URL "discord.gg/${code}" is available for your server.`,
+        error: null,
         guild: null
       };
     }
@@ -77,6 +89,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       console.error('Unexpected API response format:', data);
       return {
         available: false,
+        message: null,
         error: 'Invalid response format from server',
         guild: null
       };
@@ -87,6 +100,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     
     return {
       available: false,
+      message: `This vanity URL is currently in use by the server "${guildData.name}".`,
       error: null,
       guild: {
         id: guildData.id,
@@ -119,6 +133,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     console.error('API Error:', error);
     return {
       available: false,
+      message: null,
       error: 'Failed to connect to Discord API',
       guild: null
     };
