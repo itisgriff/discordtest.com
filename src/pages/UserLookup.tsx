@@ -159,6 +159,11 @@ function UserLookupContent() {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-xl font-semibold">{user.username}</h3>
+                      {user.global_name && (
+                        <span className="text-muted-foreground">
+                          {user.global_name}
+                        </span>
+                      )}
                       {user.bot && (
                         <span 
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/10 text-blue-500 cursor-pointer hover:bg-blue-500/20"
@@ -217,28 +222,60 @@ function UserLookupContent() {
                         {new Date(Number(BigInt(user.id) >> 22n) + 1420070400000).toLocaleDateString()}
                       </span>
                     </div>
+
+                    {/* Clan Info - Always displayed */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Clan</h4>
+                      {user.clan && user.clan.identity_enabled ? (
+                        <div className="space-y-2">
+                          {user.clan.tag && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Tag:</span>
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
+                                {user.clan.tag}
+                              </span>
+                            </div>
+                          )}
+                          {user.clan.identity_guild_id && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Guild ID:</span>
+                              <code 
+                                className="bg-muted px-2 py-0.5 rounded text-xs cursor-pointer hover:bg-muted/80"
+                                onClick={() => handlePillClick(user.clan.identity_guild_id || "", "clan guild ID")}
+                              >
+                                {user.clan.identity_guild_id}
+                              </code>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No clan affiliation</span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Right Column */}
                   <div className="space-y-4">
-                    {/* Accent Color */}
-                    {user.accent_color && (
-                      <div className="p-4 bg-card rounded-lg border">
-                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Profile Color</h4>
+                    {/* Accent Color - Always displayed */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Profile Color</h4>
+                      {user.accent_color !== null && user.accent_color !== 0 ? (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground gap-2">
                           <span 
                             className="w-4 h-4 rounded-full inline-block"
-                            style={{ backgroundColor: `#${user.accent_color.toString(16)}` }}
+                            style={{ backgroundColor: `#${user.accent_color.toString(16).padStart(6, '0')}` }}
                           />
-                          #{user.accent_color.toString(16).toUpperCase()}
+                          #{user.accent_color.toString(16).padStart(6, '0').toUpperCase()}
                         </span>
-                      </div>
-                    )}
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Default color</span>
+                      )}
+                    </div>
 
-                    {/* User Badges */}
-                    {user.flags > 0 && (
-                      <div className="p-4 bg-card rounded-lg border">
-                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Badges</h4>
+                    {/* Badges - Always displayed */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Badges</h4>
+                      {user.flags > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {getUserFlags(user.flags).map((flag) => (
                             <span 
@@ -250,8 +287,40 @@ function UserLookupContent() {
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No badges</span>
+                      )}
+                    </div>
+
+                    {/* Primary Guild Info - Always displayed */}
+                    <div className="p-4 bg-card rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2 text-muted-foreground">Primary Guild</h4>
+                      {user.primary_guild && user.primary_guild.identity_enabled ? (
+                        <div className="space-y-2">
+                          {user.primary_guild.tag && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Tag:</span>
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
+                                {user.primary_guild.tag}
+                              </span>
+                            </div>
+                          )}
+                          {user.primary_guild.identity_guild_id && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Guild ID:</span>
+                              <code 
+                                className="bg-muted px-2 py-0.5 rounded text-xs cursor-pointer hover:bg-muted/80"
+                                onClick={() => handlePillClick(user.primary_guild.identity_guild_id || "", "primary guild ID")}
+                              >
+                                {user.primary_guild.identity_guild_id}
+                              </code>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No primary guild</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

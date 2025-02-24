@@ -16,9 +16,13 @@ export interface GuildInfo {
   isNsfw: boolean;
   boostCount?: number;
   inviteCode?: string;
-  vanity_url_code?: string | null;
   splash: string | null;
   banner: string | null;
+  type?: number;
+  code?: string;
+  expires_at?: string | null;
+  flags?: number;
+  guild_id?: string;
 }
 
 export interface ClanInfo {

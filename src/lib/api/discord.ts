@@ -14,6 +14,8 @@ export const DISCORD_CDN = {
     `https://cdn.discordapp.com/avatars/${userId}/${hash}.${hash.startsWith('a_') ? 'gif' : 'png'}?size=128`,
   BANNER: (userId: string, hash: string) =>
     `https://cdn.discordapp.com/banners/${userId}/${hash}.png?size=600`,
+  BADGE: (guildId: string, hash: string) =>
+    `https://cdn.discordapp.com/guild-icons/${guildId}/${hash}.png?size=96`
 } as const;
 
 export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {

@@ -63,13 +63,18 @@ export default function VanityCheck() {
         setIsAvailable(false);
         setGuildInfo({
           ...result.guild,
-          inviteChannel: result.guild.channel,
+          type: result.type,
+          code: result.code || vanityCode,
+          expires_at: result.expires_at,
+          flags: result.flags,
+          guild_id: result.guild_id || result.guild.id,
+          inviteChannel: result.guild.channel || (result as any).channel,
           boostCount: result.guild.premium_subscription_count,
           nsfwLevel: result.guild.nsfw_level,
           isNsfw: result.guild.nsfw,
           verificationLevel: result.guild.verification_level,
           splash: result.guild.splash,
-          inviteCode: result.inviteCode || result.guild.vanity_url_code || vanityCode
+          banner: result.guild.banner
         });
       }
     } catch (error) {
@@ -251,9 +256,8 @@ export default function VanityCheck() {
                   </div>
                 )}
 
-                {guildInfo && (
-                  <div className="space-y-6 p-4 bg-card rounded-lg border animate-in fade-in-50">
-                    {/* Header with Icon and Basic Info */}
+                {!loading && !isAvailable && guildInfo && (
+                  <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       {guildInfo.icon && (
                         <img 
@@ -265,18 +269,9 @@ export default function VanityCheck() {
                       )}
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
-                        {guildInfo.inviteChannel && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <span className="text-xs text-muted-foreground">Landing in:</span> 
-                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground border border-accent/10">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M15 10l5 5-5 5"></path>
-                                <path d="M4 4v7a4 4 0 0 0 4 4h12"></path>
-                              </svg>
-                              #{guildInfo.inviteChannel.name}
-                            </span>
-                          </div>
-                        )}
+                        <p className="text-sm text-muted-foreground">
+                          {guildInfo.features.includes("VERIFIED") ? "Verified Server" : "Discord Server"}
+                        </p>
                       </div>
                       <a
                         href={`https://discord.com/invite/${guildInfo.inviteCode}`}
@@ -292,18 +287,14 @@ export default function VanityCheck() {
                       </a>
                     </div>
 
-                    {/* Description */}
                     {guildInfo.description && (
                       <div className="bg-muted/50 p-3 rounded-md">
                         <p className="text-sm">{guildInfo.description}</p>
                       </div>
                     )}
 
-                    {/* Server Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Left Column */}
                       <div className="space-y-4">
-                        {/* Boost Status */}
                         {guildInfo?.boostCount !== undefined && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Boost Status</h4>
@@ -313,7 +304,6 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {/* Verification Level */}
                         {guildInfo.verificationLevel !== undefined && (
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
@@ -361,7 +351,6 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {/* NSFW Status */}
                         {(guildInfo.nsfwLevel !== undefined || guildInfo.isNsfw !== undefined) && (
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
@@ -398,34 +387,16 @@ export default function VanityCheck() {
                         )}
                       </div>
 
-                      {/* Right Column */}
                       <div className="space-y-4">
-                        {/* Invite Channel */}
                         {guildInfo.inviteChannel && (
-                          <div className="border border-accent/20 bg-accent/5 p-3 rounded-lg">
-                            <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                              <ExternalLink className="h-4 w-4 text-accent" />
-                              Landing Channel
-                            </h4>
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent-foreground">
-                                  #{guildInfo.inviteChannel.name}
-                                </span>
-                                <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded-full">Active</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-                                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
-                                  <path d="m7 10 5 5 5-5"></path>
-                                </svg>
-                                New members will enter the server through this channel
-                              </div>
-                            </div>
+                          <div>
+                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Channel</h4>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
+                              #{guildInfo.inviteChannel.name}
+                            </span>
                           </div>
                         )}
 
-                        {/* Server Features */}
                         {guildInfo.features.length > 0 && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Features</h4>
@@ -446,7 +417,6 @@ export default function VanityCheck() {
                       </div>
                     </div>
 
-                    {/* Server Banner */}
                     {guildInfo.banner && (
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Banner</h4>
@@ -459,7 +429,6 @@ export default function VanityCheck() {
                       </div>
                     )}
 
-                    {/* Server Splash */}
                     {guildInfo.splash && (
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Splash</h4>
@@ -471,10 +440,23 @@ export default function VanityCheck() {
                         />
                       </div>
                     )}
+
+                    {guildInfo.flags !== undefined && (
+                      <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                        <span>Flags:</span>
+                        <code>{guildInfo.flags}</code>
+                      </div>
+                    )}
+                    
+                    {guildInfo.expires_at && (
+                      <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                        <span>Expires:</span>
+                        <time>{new Date(guildInfo.expires_at).toLocaleString()}</time>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Raw Data Button */}
                 <div className="flex justify-center mt-4">
                   <Button
                     variant="outline"
