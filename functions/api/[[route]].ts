@@ -32,8 +32,35 @@ app.get('/api/vanity/:code', async (c) => {
     }
   })
 
+  // If status is 404, the vanity URL is available
+  if (response.status === 404) {
+    return c.json({ 
+      available: true,
+      guild: null
+    })
+  }
+
   const data = await response.json()
-  return c.json(data)
+  
+  // Handle successful response, which means the vanity URL is taken
+  if (response.ok) {
+    return c.json({
+      available: false,
+      type: data.type,
+      code: data.code,
+      expires_at: data.expires_at,
+      flags: data.flags,
+      guild_id: data.guild_id,
+      guild: data.guild,
+      channel: data.channel
+    })
+  }
+  
+  // Handle other error cases
+  return c.json({ 
+    available: false,
+    error: data.message || 'An error occurred while checking the vanity URL'
+  }, response.status === 429 ? 429 : 500)
 })
 
 // User lookup endpoint

@@ -6,8 +6,6 @@ export interface GuildInfo {
   icon: string | null;
   description: string | null;
   features: string[];
-  memberCount?: number;
-  onlineCount?: number;
   inviteChannel?: {
     id: string;
     name: string;
@@ -20,6 +18,11 @@ export interface GuildInfo {
   inviteCode?: string;
   splash: string | null;
   banner: string | null;
+  type?: number;
+  code?: string;
+  expires_at?: string | null;
+  flags?: number;
+  guild_id?: string;
 }
 
 export interface ClanInfo {

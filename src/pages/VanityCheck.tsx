@@ -63,14 +63,18 @@ export default function VanityCheck() {
         setIsAvailable(false);
         setGuildInfo({
           ...result.guild,
-          memberCount: result.guild.approximate_member_count,
-          onlineCount: result.guild.approximate_presence_count,
-          inviteChannel: result.guild.channel,
+          type: result.type,
+          code: result.code || vanityCode,
+          expires_at: result.expires_at,
+          flags: result.flags,
+          guild_id: result.guild_id || result.guild.id,
+          inviteChannel: result.guild.channel || (result as any).channel,
           boostCount: result.guild.premium_subscription_count,
           nsfwLevel: result.guild.nsfw_level,
           isNsfw: result.guild.nsfw,
           verificationLevel: result.guild.verification_level,
-          splash: result.guild.splash
+          splash: result.guild.splash,
+          banner: result.guild.banner
         });
       }
     } catch (error) {
@@ -236,6 +240,9 @@ export default function VanityCheck() {
                       <p className="text-sm text-muted-foreground">
                         The vanity URL "discord.gg/{code}" is available for your server.
                       </p>
+                      <p className="text-xs mt-1 text-muted-foreground">
+                        You can claim this vanity URL for your server in Server Settings {'>'}  Server Boost.
+                      </p>
                     </div>
                     <Button
                       onClick={() => {
@@ -249,9 +256,8 @@ export default function VanityCheck() {
                   </div>
                 )}
 
-                {guildInfo && (
-                  <div className="space-y-6 p-4 bg-card rounded-lg border animate-in fade-in-50">
-                    {/* Header with Icon and Basic Info */}
+                {!loading && !isAvailable && guildInfo && (
+                  <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       {guildInfo.icon && (
                         <img 
@@ -264,7 +270,7 @@ export default function VanityCheck() {
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
+                          {guildInfo.features.includes("VERIFIED") ? "Verified Server" : "Discord Server"}
                         </p>
                       </div>
                       <a
@@ -281,18 +287,14 @@ export default function VanityCheck() {
                       </a>
                     </div>
 
-                    {/* Description */}
                     {guildInfo.description && (
                       <div className="bg-muted/50 p-3 rounded-md">
                         <p className="text-sm">{guildInfo.description}</p>
                       </div>
                     )}
 
-                    {/* Server Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Left Column */}
                       <div className="space-y-4">
-                        {/* Boost Status */}
                         {guildInfo?.boostCount !== undefined && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Boost Status</h4>
@@ -302,7 +304,6 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {/* Verification Level */}
                         {guildInfo.verificationLevel !== undefined && (
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
@@ -350,7 +351,6 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {/* NSFW Status */}
                         {(guildInfo.nsfwLevel !== undefined || guildInfo.isNsfw !== undefined) && (
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
@@ -387,9 +387,7 @@ export default function VanityCheck() {
                         )}
                       </div>
 
-                      {/* Right Column */}
                       <div className="space-y-4">
-                        {/* Invite Channel */}
                         {guildInfo.inviteChannel && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Channel</h4>
@@ -399,7 +397,6 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {/* Server Features */}
                         {guildInfo.features.length > 0 && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Features</h4>
@@ -420,7 +417,6 @@ export default function VanityCheck() {
                       </div>
                     </div>
 
-                    {/* Server Banner */}
                     {guildInfo.banner && (
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Banner</h4>
@@ -433,7 +429,6 @@ export default function VanityCheck() {
                       </div>
                     )}
 
-                    {/* Server Splash */}
                     {guildInfo.splash && (
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Splash</h4>
@@ -445,10 +440,23 @@ export default function VanityCheck() {
                         />
                       </div>
                     )}
+
+                    {guildInfo.flags !== undefined && (
+                      <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                        <span>Flags:</span>
+                        <code>{guildInfo.flags}</code>
+                      </div>
+                    )}
+                    
+                    {guildInfo.expires_at && (
+                      <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                        <span>Expires:</span>
+                        <time>{new Date(guildInfo.expires_at).toLocaleString()}</time>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Raw Data Button */}
                 <div className="flex justify-center mt-4">
                   <Button
                     variant="outline"

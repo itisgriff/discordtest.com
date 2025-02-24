@@ -20,12 +20,16 @@ export interface DiscordChannel {
 }
 
 export interface DiscordInviteResponse {
+  type: number;
+  code: string;
+  expires_at: string | null;
+  flags: number;
   guild: DiscordGuild;
+  guild_id?: string;
+  channel?: DiscordChannel;
   approximate_member_count?: number;
   approximate_presence_count?: number;
-  channel?: DiscordChannel;
   message?: string;
-  code?: string;
 }
 
 export interface UnknownInviteResponse {
@@ -42,8 +46,6 @@ export interface VanityUrlResponse {
     icon: string | null;
     description: string | null;
     features: string[];
-    approximate_member_count?: number;
-    approximate_presence_count?: number;
     channel?: DiscordChannel;
     verification_level: number;
     nsfw_level: number;
@@ -53,6 +55,11 @@ export interface VanityUrlResponse {
     banner: string | null;
   } | null;
   retryAfter?: number;
+  type?: number;
+  code?: string;
+  expires_at?: string | null;
+  flags?: number;
+  guild_id?: string;
 }
 
 export interface DiscordUser {

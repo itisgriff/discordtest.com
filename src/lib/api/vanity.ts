@@ -1,17 +1,28 @@
 import { VanityUrlResponse } from '@/types/discord';
 import { API_CONFIG } from './discord';
 
-interface ErrorResponse {
-  error: string;
-}
-
 // Minimal required fields for guild data
 interface MinimalGuildResponse {
   id: string;
   name: string;
 }
 
-function isValidGuildData(data: any): data is { guild: MinimalGuildResponse } {
+// Extended response interface to include new Discord API fields
+interface DiscordAPIResponse {
+  guild: MinimalGuildResponse;
+  type?: number;
+  code?: string;
+  expires_at?: string | null;
+  flags?: number;
+  guild_id?: string;
+  channel?: {
+    id: string;
+    name: string;
+    type: number;
+  };
+}
+
+function isValidGuildData(data: any): data is DiscordAPIResponse {
   return (
     data &&
     typeof data === 'object' &&
@@ -41,9 +52,19 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       headers: API_CONFIG.HEADERS,
     });
 
+    const data = await response.json();
+
+    // Handle the case where Discord API returns Error 10006 (Unknown Invite)
+    // This means the vanity URL is available
+    if (data.code === 10006 || data.available === true) {
+      return {
+        available: true,
+        error: null,
+        guild: null
+      };
+    }
+
     if (!response.ok) {
-      const data = await response.json() as ErrorResponse;
-      
       switch (response.status) {
         case 429:
           return {
@@ -55,23 +76,12 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
         default:
           return {
             available: false,
-            error: data.error || `Failed to check vanity URL: ${response.status}`,
+            error: data.error || data.message || `Failed to check vanity URL: ${response.status}`,
             guild: null
           };
       }
     }
-
-    const data = await response.json();
     
-    // Handle available vanity URLs
-    if (data.available) {
-      return {
-        available: true,
-        error: `The vanity URL "discord.com/invite/${code}" is available! You can use it for your server.`,
-        guild: null
-      };
-    }
-
     // Handle taken vanity URLs
     if (!isValidGuildData(data)) {
       console.error('Unexpected API response format:', data);
@@ -82,17 +92,20 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    // Type assertion for flexible field access
+    // Now data is typed as DiscordAPIResponse
     const guildData = data.guild as Record<string, any>;
     
     return {
       available: false,
       error: null,
+      type: data.type,
+      code: data.code || code,
+      expires_at: data.expires_at || null,
+      flags: data.flags,
+      guild_id: data.guild_id || guildData.id,
       guild: {
         id: guildData.id,
         name: guildData.name,
-        approximate_member_count: guildData.approximate_member_count ?? undefined,
-        approximate_presence_count: guildData.approximate_presence_count ?? undefined,
         icon: guildData.icon 
           ? `https://cdn.discordapp.com/icons/${guildData.id}/${guildData.icon}.png?size=128`
           : null,
