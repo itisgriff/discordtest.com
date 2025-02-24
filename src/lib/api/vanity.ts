@@ -1,19 +1,28 @@
 import { VanityUrlResponse } from '@/types/discord';
 import { API_CONFIG } from './discord';
 
-interface ErrorResponse {
-  error: string;
-  message?: string;
-  code?: number;
-}
-
 // Minimal required fields for guild data
 interface MinimalGuildResponse {
   id: string;
   name: string;
 }
 
-function isValidGuildData(data: any): boolean {
+// Extended response interface to include new Discord API fields
+interface DiscordAPIResponse {
+  guild: MinimalGuildResponse;
+  type?: number;
+  code?: string;
+  expires_at?: string | null;
+  flags?: number;
+  guild_id?: string;
+  channel?: {
+    id: string;
+    name: string;
+    type: number;
+  };
+}
+
+function isValidGuildData(data: any): data is DiscordAPIResponse {
   return (
     data &&
     typeof data === 'object' &&
@@ -45,46 +54,36 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
 
     const data = await response.json();
 
-    // Handle error responses - a 404 or code 10006 means the URL is available
-    if (!response.ok || data.code === 10006) {
-      // If it's a 404 or specific "Unknown Invite" error, it means the vanity URL is available
-      if (response.status === 404 || data.code === 10006) {
-        return {
-          available: true,
-          error: null,
-          guild: null
-        };
-      }
-
-      // Handle rate limiting
-      if (response.status === 429) {
-        return {
-          available: false,
-          error: 'Too many requests. Please wait a moment.',
-          guild: null,
-          retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
-        };
-      }
-
-      // Other error cases
+    // Handle the case where Discord API returns Error 10006 (Unknown Invite)
+    // This means the vanity URL is available
+    if (data.code === 10006 || data.available === true) {
       return {
-        available: false,
-        error: data.error || data.message || `Failed to check vanity URL: ${response.status}`,
+        available: true,
+        error: null,
         guild: null
       };
     }
-    
-    // If we have a valid response but no guild data, the URL is available
-    if (!isValidGuildData(data)) {
-      // In case Discord API changes format but still returns a success response
-      if (data.available === true) {
-        return {
-          available: true,
-          error: null,
-          guild: null
-        };
-      }
 
+    if (!response.ok) {
+      switch (response.status) {
+        case 429:
+          return {
+            available: false,
+            error: 'Too many requests. Please wait a moment.',
+            guild: null,
+            retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
+          };
+        default:
+          return {
+            available: false,
+            error: data.error || data.message || `Failed to check vanity URL: ${response.status}`,
+            guild: null
+          };
+      }
+    }
+    
+    // Handle taken vanity URLs
+    if (!isValidGuildData(data)) {
       console.error('Unexpected API response format:', data);
       return {
         available: false,
@@ -93,14 +92,17 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    // At this point, we have confirmed the vanity URL is taken and we have guild data
-    // Type assertion for flexible field access
+    // Now data is typed as DiscordAPIResponse
     const guildData = data.guild as Record<string, any>;
     
     return {
       available: false,
       error: null,
-      inviteCode: data.code, // Store the actual invite code from response
+      type: data.type,
+      code: data.code || code,
+      expires_at: data.expires_at || null,
+      flags: data.flags,
+      guild_id: data.guild_id || guildData.id,
       guild: {
         id: guildData.id,
         name: guildData.name,
@@ -119,11 +121,10 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
         nsfw_level: guildData.nsfw_level ?? 0,
         nsfw: guildData.nsfw ?? false,
         premium_subscription_count: guildData.premium_subscription_count ?? 0,
-        vanity_url_code: guildData.vanity_url_code ?? code,
-        channel: data.channel ? {
-          id: data.channel.id,
-          name: data.channel.name,
-          type: data.channel.type
+        channel: (data as any).channel ? {
+          id: (data as any).channel.id,
+          name: (data as any).channel.name,
+          type: (data as any).channel.type
         } : undefined
       }
     };

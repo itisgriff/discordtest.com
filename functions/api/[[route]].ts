@@ -46,7 +46,13 @@ app.get('/api/vanity/:code', async (c) => {
   if (response.ok) {
     return c.json({
       available: false,
-      guild: data.guild
+      type: data.type,
+      code: data.code,
+      expires_at: data.expires_at,
+      flags: data.flags,
+      guild_id: data.guild_id,
+      guild: data.guild,
+      channel: data.channel
     })
   }
   
