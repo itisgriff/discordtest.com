@@ -63,8 +63,6 @@ export default function VanityCheck() {
         setIsAvailable(false);
         setGuildInfo({
           ...result.guild,
-          memberCount: result.guild.approximate_member_count,
-          onlineCount: result.guild.approximate_presence_count,
           inviteChannel: result.guild.channel,
           boostCount: result.guild.premium_subscription_count,
           nsfwLevel: result.guild.nsfw_level,
@@ -267,9 +265,18 @@ export default function VanityCheck() {
                       )}
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
-                        </p>
+                        {guildInfo.inviteChannel && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-xs text-muted-foreground">Landing in:</span> 
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent-foreground border border-accent/10">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M15 10l5 5-5 5"></path>
+                                <path d="M4 4v7a4 4 0 0 0 4 4h12"></path>
+                              </svg>
+                              #{guildInfo.inviteChannel.name}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <a
                         href={`https://discord.com/invite/${guildInfo.inviteCode}`}
@@ -395,11 +402,26 @@ export default function VanityCheck() {
                       <div className="space-y-4">
                         {/* Invite Channel */}
                         {guildInfo.inviteChannel && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Channel</h4>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
-                              #{guildInfo.inviteChannel.name}
-                            </span>
+                          <div className="border border-accent/20 bg-accent/5 p-3 rounded-lg">
+                            <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                              <ExternalLink className="h-4 w-4 text-accent" />
+                              Landing Channel
+                            </h4>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent-foreground">
+                                  #{guildInfo.inviteChannel.name}
+                                </span>
+                                <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded-full">Active</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
+                                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                                  <path d="m7 10 5 5 5-5"></path>
+                                </svg>
+                                New members will enter the server through this channel
+                              </div>
+                            </div>
                           </div>
                         )}
 

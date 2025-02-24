@@ -43,8 +43,6 @@ export interface VanityUrlResponse {
     icon: string | null;
     description: string | null;
     features: string[];
-    approximate_member_count?: number;
-    approximate_presence_count?: number;
     channel?: DiscordChannel;
     verification_level: number;
     nsfw_level: number;

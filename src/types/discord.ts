@@ -6,8 +6,6 @@ export interface GuildInfo {
   icon: string | null;
   description: string | null;
   features: string[];
-  memberCount?: number;
-  onlineCount?: number;
   inviteChannel?: {
     id: string;
     name: string;
