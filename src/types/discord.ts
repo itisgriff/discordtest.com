@@ -18,6 +18,7 @@ export interface GuildInfo {
   isNsfw: boolean;
   boostCount?: number;
   inviteCode?: string;
+  vanity_url_code?: string | null;
   splash: string | null;
   banner: string | null;
 }
