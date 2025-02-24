@@ -12,6 +12,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { JsonViewer } from '@/components/ui/JsonViewer';
 import { ExternalLink, Info, ShieldAlert, ShieldCheck, AlertTriangle, Shield, ShieldQuestion, ShieldOff } from 'lucide-react';
 import { Popover } from '@/components/ui/popover';
+import { SuccessBanner } from '@/components/ui/SuccessBanner';
+import { ErrorDisplay } from '@/components/ui/ErrorDisplay';
+import { TakenVanityInfo } from '@/components/ui/TakenVanityInfo';
+import { VanityUrlResponse } from '@/types/discord';
 
 export default function VanityCheck() {
   const { code: urlCode } = useParams<{ code?: string }>();
@@ -21,7 +25,7 @@ export default function VanityCheck() {
   const [guildInfo, setGuildInfo] = useState<GuildInfo | null>(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [showRawData, setShowRawData] = useState(false);
-  const [rawApiResponse, setRawApiResponse] = useState<unknown>(null);
+  const [rawApiResponse, setRawApiResponse] = useState<VanityUrlResponse | null>(null);
 
   useEffect(() => {
     if (urlCode && urlCode !== code) {
@@ -185,291 +189,97 @@ export default function VanityCheck() {
   );
 
   return (
-    <>
+    <div className="container max-w-2xl mx-auto px-4 py-8">
       <MetaTags 
-        title="Vanity URL Checker"
-        description="Check if your desired vanity URL is available for your Discord server."
-        path={urlCode ? `/vanity/${urlCode}` : "/vanity"}
+        title="Discord Vanity URL Checker"
+        description="Check if a custom Discord vanity URL is available for your server."
+        path={`/vanity${urlCode ? `/${urlCode}` : ''}`}
       />
       
-      <div className="container max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text leading-relaxed py-1">
-          Vanity URL Checker
-        </h1>
-        
-        <p className="text-muted-foreground text-center mb-8">
-          Check if your desired vanity URL is available for your Discord server.
-        </p>
+      <h1 className="text-4xl font-bold text-center mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text leading-relaxed py-1">
+        Discord Vanity URL Checker
+      </h1>
+      
+      <p className="text-muted-foreground text-center mb-8">
+        Check if a custom Discord vanity URL is available for your server.
+      </p>
 
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter vanity URL"
-                value={code}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                disabled={loading}
-                className="flex-1"
-                aria-label="Vanity URL input"
-                minLength={2}
-                maxLength={32}
-              />
-              <Button 
-                onClick={() => handleCheck()}
-                disabled={loading || !code}
-                className="bg-accent hover:bg-accent/90 min-w-[120px]"
-                aria-label={loading ? "Checking..." : "Check availability"}
-              >
-                {loading ? "Checking..." : "Check"}
-              </Button>
-            </div>
-
-            {loading && <LoadingSkeleton />}
-
-            {!loading && (isAvailable || guildInfo) && (
-              <>
-                {isAvailable && (
-                  <div className="flex items-center gap-4 p-4 bg-card rounded-lg border border-green-500/20 bg-green-500/10 animate-in fade-in-50">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-green-500">Available!</h3>
-                      <p className="text-sm text-muted-foreground">
-                        The vanity URL "discord.gg/{code}" is available for your server.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        navigator.clipboard.writeText(code);
-                        toast.success('Copied to clipboard!');
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white min-w-[120px]"
-                    >
-                      Copy URL
-                    </Button>
-                  </div>
-                )}
-
-                {guildInfo && (
-                  <div className="space-y-6 p-4 bg-card rounded-lg border animate-in fade-in-50">
-                    {/* Header with Icon and Basic Info */}
-                    <div className="flex items-center gap-4">
-                      {guildInfo.icon && (
-                        <img 
-                          src={guildInfo.icon} 
-                          alt={`${guildInfo.name} icon`}
-                          className="w-16 h-16 rounded-full"
-                          loading="lazy"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {(guildInfo.onlineCount || 0).toLocaleString()} Online · {(guildInfo.memberCount || 0).toLocaleString()} Members
-                        </p>
-                      </div>
-                      <a
-                        href={`https://discord.com/invite/${guildInfo.inviteCode}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={buttonVariants({
-                          variant: "default",
-                          className: "bg-green-600 hover:bg-green-700 text-white gap-2"
-                        })}
-                      >
-                        Join Server
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </div>
-
-                    {/* Description */}
-                    {guildInfo.description && (
-                      <div className="bg-muted/50 p-3 rounded-md">
-                        <p className="text-sm">{guildInfo.description}</p>
-                      </div>
-                    )}
-
-                    {/* Server Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Left Column */}
-                      <div className="space-y-4">
-                        {/* Boost Status */}
-                        {guildInfo?.boostCount !== undefined && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Boost Status</h4>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500/10 text-purple-500">
-                              {guildInfo.boostCount} Boost{guildInfo.boostCount !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Verification Level */}
-                        {guildInfo.verificationLevel !== undefined && (
-                          <div>
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <h4 className="text-sm font-medium text-muted-foreground">Verification Level</h4>
-                              <Popover content={<VerificationLevelInfo />}>
-                                <div className="cursor-help">
-                                  <Info className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
-                                </div>
-                              </Popover>
-                            </div>
-                            <span 
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:bg-opacity-20 ${
-                                guildInfo.verificationLevel === 0 ? "bg-green-500/10 text-green-500 hover:bg-green-500/20" :
-                                guildInfo.verificationLevel === 1 ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20" :
-                                guildInfo.verificationLevel === 2 ? "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20" :
-                                guildInfo.verificationLevel === 3 ? "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20" :
-                                "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                              }`}
-                              onClick={() => handlePillClick(
-                                guildInfo.verificationLevel === 0 ? "None" :
-                                guildInfo.verificationLevel === 1 ? "Low" :
-                                guildInfo.verificationLevel === 2 ? "Medium" :
-                                guildInfo.verificationLevel === 3 ? "High" :
-                                "Highest",
-                                "verification level"
-                              )}
-                            >
-                              {guildInfo.verificationLevel === 0 ? (
-                                <ShieldOff className="h-4 w-4" />
-                              ) : guildInfo.verificationLevel === 1 ? (
-                                <ShieldQuestion className="h-4 w-4" />
-                              ) : guildInfo.verificationLevel === 2 ? (
-                                <Shield className="h-4 w-4" />
-                              ) : guildInfo.verificationLevel === 3 ? (
-                                <ShieldAlert className="h-4 w-4" />
-                              ) : (
-                                <ShieldCheck className="h-4 w-4" />
-                              )}
-                              {guildInfo.verificationLevel === 0 ? "None" :
-                               guildInfo.verificationLevel === 1 ? "Low" :
-                               guildInfo.verificationLevel === 2 ? "Medium" :
-                               guildInfo.verificationLevel === 3 ? "High" :
-                               "Highest"}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* NSFW Status */}
-                        {(guildInfo.nsfwLevel !== undefined || guildInfo.isNsfw !== undefined) && (
-                          <div>
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <h4 className="text-sm font-medium text-muted-foreground">Content Rating</h4>
-                              <Popover content={<ContentRatingInfo />}>
-                                <div className="cursor-help">
-                                  <Info className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
-                                </div>
-                              </Popover>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {guildInfo.nsfwLevel > 0 || guildInfo.isNsfw ? (
-                                <span 
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-red-500/10 text-red-500 cursor-pointer hover:bg-red-500/20"
-                                  onClick={() => handlePillClick(
-                                    guildInfo.nsfwLevel > 0 ? `NSFW Level ${guildInfo.nsfwLevel}` : "Age-Restricted",
-                                    "content rating"
-                                  )}
-                                >
-                                  <ShieldAlert className="h-4 w-4" />
-                                  {guildInfo.nsfwLevel > 0 ? `NSFW Level ${guildInfo.nsfwLevel}` : "Age-Restricted"}
-                                </span>
-                              ) : (
-                                <span 
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-500 cursor-pointer hover:bg-green-500/20"
-                                  onClick={() => handlePillClick("Safe Content", "content rating")}
-                                >
-                                  <ShieldCheck className="h-4 w-4" />
-                                  Safe Content
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Column */}
-                      <div className="space-y-4">
-                        {/* Invite Channel */}
-                        {guildInfo.inviteChannel && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Channel</h4>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
-                              #{guildInfo.inviteChannel.name}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Server Features */}
-                        {guildInfo.features.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Features</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {guildInfo.features.map(feature => (
-                                <span 
-                                  key={feature} 
-                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground cursor-pointer hover:bg-accent/20"
-                                  onClick={() => handlePillClick(feature, "feature")}
-                                  title={feature}
-                                >
-                                  {feature.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Server Banner */}
-                    {guildInfo.banner && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Banner</h4>
-                        <img 
-                          src={guildInfo.banner} 
-                          alt="Server Banner"
-                          className="w-full h-40 object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-
-                    {/* Server Splash */}
-                    {guildInfo.splash && (
-                      <div>
-                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Invite Splash</h4>
-                        <img 
-                          src={guildInfo.splash} 
-                          alt="Server Splash"
-                          className="w-full h-40 object-cover rounded-lg"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Raw Data Button */}
-                <div className="flex justify-center mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowRawData(true)}
-                  >
-                    View Raw Data
-                  </Button>
-                </div>
-              </>
-            )}
-
-            <JsonViewer
-              data={rawApiResponse}
-              title="Raw API Response"
-              open={showRawData}
-              onOpenChange={setShowRawData}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter vanity code"
+              value={code}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+              className="flex-1"
             />
+            <Button
+              onClick={() => handleCheck()}
+              disabled={loading}
+              className="bg-accent hover:bg-accent/90"
+            >
+              {loading ? 'Checking...' : 'Check'}
+            </Button>
           </div>
-        </Card>
-      </div>
-    </>
+
+          <div className="text-sm text-muted-foreground">
+            <p>Example: If you want to check <code>discord.gg/example</code>, just enter <code>example</code></p>
+          </div>
+        </div>
+      </Card>
+
+      {loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <>
+          {isAvailable && rawApiResponse && (
+            <SuccessBanner
+              code={code}
+              message={rawApiResponse.message || `Great news! discord.gg/${code} is available!`}
+            />
+          )}
+          
+          {!isAvailable && guildInfo && rawApiResponse && (
+            <TakenVanityInfo 
+              guild={guildInfo} 
+              code={code} 
+              message={rawApiResponse.message}
+            />
+          )}
+          
+          {!isAvailable && !guildInfo && rawApiResponse?.error && (
+            <ErrorDisplay 
+              error={rawApiResponse.error}
+              retryAfter={rawApiResponse.retryAfter}
+              onRetry={() => handleCheck()}
+            />
+          )}
+          
+          {rawApiResponse && (
+            <div className="mt-8">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-medium">Advanced</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRawData(!showRawData)}
+                >
+                  {showRawData ? 'Hide' : 'Show'} Raw Data
+                </Button>
+              </div>
+              
+              <JsonViewer 
+                data={rawApiResponse} 
+                title="Vanity URL API Response"
+                open={showRawData}
+                onOpenChange={setShowRawData}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }

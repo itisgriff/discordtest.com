@@ -35,6 +35,7 @@ export interface UnknownInviteResponse {
 
 export interface VanityUrlResponse {
   error: string | null;
+  message: string | null;
   available: boolean;
   guild: {
     id: string;
