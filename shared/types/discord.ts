@@ -36,6 +36,7 @@ export interface UnknownInviteResponse {
 export interface VanityUrlResponse {
   error: string | null;
   available: boolean;
+  inviteCode?: string;
   guild: {
     id: string;
     name: string;
@@ -51,6 +52,7 @@ export interface VanityUrlResponse {
     premium_subscription_count?: number;
     splash: string | null;
     banner: string | null;
+    vanity_url_code?: string | null;
   } | null;
   retryAfter?: number;
 }

@@ -70,7 +70,8 @@ export default function VanityCheck() {
           nsfwLevel: result.guild.nsfw_level,
           isNsfw: result.guild.nsfw,
           verificationLevel: result.guild.verification_level,
-          splash: result.guild.splash
+          splash: result.guild.splash,
+          inviteCode: result.inviteCode || result.guild.vanity_url_code || vanityCode
         });
       }
     } catch (error) {
