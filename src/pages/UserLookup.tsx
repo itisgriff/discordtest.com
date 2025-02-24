@@ -11,14 +11,6 @@ import type { DiscordUser } from '@/types/discord';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getUserFlags } from '@/lib/utils/userFlags';
 import { JsonViewer } from '@/components/ui/JsonViewer';
-import { UserErrorDisplay } from '@/components/ui/UserErrorDisplay';
-
-// Define a type for the API response
-type UserApiResponse = DiscordUser | {
-  user: DiscordUser | null;
-  error: string | null;
-  retryAfter?: number;
-};
 
 function UserLookupContent() {
   const { userId: urlUserId } = useParams<{ userId?: string }>();
@@ -27,8 +19,6 @@ function UserLookupContent() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [showRawData, setShowRawData] = useState(false);
-  const [error, setError] = useState<{ message: string; retryAfter?: number } | null>(null);
-  const [rawApiResponse, setRawApiResponse] = useState<UserApiResponse | null>(null);
 
   // Effect to handle URL parameter changes
   useEffect(() => {
@@ -45,45 +35,17 @@ function UserLookupContent() {
       return;
     }
 
-    // Update URL if needed
+    // Update URL if needed, but don't return early
     if (!id && lookupId !== urlUserId) {
       navigate(`/lookup/${lookupId}`);
     }
 
     setLoading(true);
-    setError(null);
-    
     try {
       const result = await lookupUser(lookupId);
-      setRawApiResponse(result);
-      
-      // Check if result is an error response
-      if ('error' in result && result.error) {
-        setError({
-          message: result.error,
-          retryAfter: result.retryAfter
-        });
-        setUser(null);
-        return;
-      }
-      
-      // If we have a successful user object
-      if ('id' in result) {
+      if (result) {
         setUser(result);
-        setError(null);
-      } else {
-        // Fallback error
-        setError({ 
-          message: 'Invalid response from server' 
-        });
-        setUser(null);
       }
-    } catch (err) {
-      console.error('Lookup error:', err);
-      setError({ 
-        message: 'Failed to lookup user' 
-      });
-      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -144,26 +106,19 @@ function UserLookupContent() {
               data-form-type="other"
               data-lpignore="true"
             />
-            <Button
+            <Button 
               onClick={() => handleLookup()}
-              disabled={loading}
-              className="bg-accent hover:bg-accent/90"
+              disabled={loading || !userId}
+              className="bg-accent hover:bg-accent/90 min-w-[120px]"
+              aria-label={loading ? "Looking up..." : "Look up user"}
             >
-              {loading ? 'Searching...' : 'Search'}
+              {loading ? "Looking up..." : "Look up"}
             </Button>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            <p>Enter a Discord user ID (usually a 17-20 digit number)</p>
-          </div>
-        </div>
-      </Card>
+          {loading && <LoadingSkeleton />}
 
-      {loading ? (
-        <LoadingSkeleton />
-      ) : (
-        <div>
-          {user && (
+          {!loading && user && (
             <>
               <div className="flex flex-col gap-6 animate-in fade-in-50">
                 {/* User Banner */}
@@ -313,38 +268,15 @@ function UserLookupContent() {
               </div>
             </>
           )}
-          
-          {error && (
-            <UserErrorDisplay 
-              error={error.message}
-              retryAfter={error.retryAfter}
-              onRetry={() => handleLookup()}
-            />
-          )}
-          
-          {rawApiResponse && (
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-medium">Advanced</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRawData(!showRawData)}
-                >
-                  {showRawData ? 'Hide' : 'Show'} Raw Data
-                </Button>
-              </div>
-              
-              <JsonViewer 
-                data={rawApiResponse} 
-                title="User API Response"
-                open={showRawData}
-                onOpenChange={setShowRawData}
-              />
-            </div>
-          )}
+
+          <JsonViewer
+            data={user}
+            title="Raw User Data"
+            open={showRawData}
+            onOpenChange={setShowRawData}
+          />
         </div>
-      )}
+      </Card>
     </div>
   );
 }

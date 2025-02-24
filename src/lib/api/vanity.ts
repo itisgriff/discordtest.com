@@ -31,8 +31,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     if (!code.match(/^[a-zA-Z0-9-]+$/)) {
       return {
         available: false,
-        message: null,
-        error: 'Invalid vanity URL format. Use only letters, numbers, and hyphens.',
+        error: 'Invalid vanity URL format',
         guild: null
       };
     }
@@ -42,54 +41,41 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       headers: API_CONFIG.HEADERS,
     });
 
-    if (!response.ok) {
-      const data = await response.json() as ErrorResponse;
-      
-      switch (response.status) {
-        case 429:
-          return {
-            available: false,
-            message: null,
-            error: 'Too many requests. Please wait a moment.',
-            guild: null,
-            retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
-          };
-        case 404:
-          // Not found - this means the vanity is available!
-          return {
-            available: true,
-            message: `Great news! The vanity URL "discord.gg/${code}" is available for your server.`,
-            error: null,
-            guild: null
-          };
-        default:
-          return {
-            available: false,
-            message: null,
-            error: data.error || `Failed to check vanity URL: ${response.status}`,
-            guild: null
-          };
-      }
-    }
-
     const data = await response.json();
-    
-    // Handle available vanity URLs
-    if (data.available) {
+
+    // Handle the case where Discord API returns Error 10006 (Unknown Invite)
+    // This means the vanity URL is available
+    if (data.code === 10006 || data.available === true) {
       return {
         available: true,
-        message: `Great news! The vanity URL "discord.gg/${code}" is available for your server.`,
         error: null,
         guild: null
       };
     }
 
+    if (!response.ok) {
+      switch (response.status) {
+        case 429:
+          return {
+            available: false,
+            error: 'Too many requests. Please wait a moment.',
+            guild: null,
+            retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
+          };
+        default:
+          return {
+            available: false,
+            error: data.error || data.message || `Failed to check vanity URL: ${response.status}`,
+            guild: null
+          };
+      }
+    }
+    
     // Handle taken vanity URLs
     if (!isValidGuildData(data)) {
       console.error('Unexpected API response format:', data);
       return {
         available: false,
-        message: null,
         error: 'Invalid response format from server',
         guild: null
       };
@@ -100,7 +86,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     
     return {
       available: false,
-      message: `This vanity URL is currently in use by the server "${guildData.name}".`,
       error: null,
       guild: {
         id: guildData.id,
@@ -133,7 +118,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
     console.error('API Error:', error);
     return {
       available: false,
-      message: null,
       error: 'Failed to connect to Discord API',
       guild: null
     };
