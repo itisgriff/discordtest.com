@@ -104,8 +104,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       guild: {
         id: guildData.id,
         name: guildData.name,
-        approximate_member_count: data.approximate_member_count ?? undefined,
-        approximate_presence_count: data.approximate_presence_count ?? undefined,
         icon: guildData.icon 
           ? `https://cdn.discordapp.com/icons/${guildData.id}/${guildData.icon}.png?size=128`
           : null,
