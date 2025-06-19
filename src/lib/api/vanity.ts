@@ -1,5 +1,5 @@
 import { VanityUrlResponse } from '@/types/discord';
-import { API_CONFIG } from './discord';
+import { toast } from '@/components/ui/toast';
 
 // Minimal required fields for guild data
 interface MinimalGuildResponse {
@@ -35,8 +35,16 @@ function isValidGuildData(data: any): data is DiscordAPIResponse {
   );
 }
 
+// API configuration
+export const VANITY_API_CONFIG = {
+  BASE_URL: '/api',
+  HEADERS: {
+    'Content-Type': 'application/json',
+  },
+} as const;
+
 // Check vanity URL availability
-export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
+export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | null> {
   try {
     // Input validation
     if (!code.match(/^[a-zA-Z0-9-]+$/)) {
@@ -47,10 +55,30 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    const response = await fetch(`${API_CONFIG.BASE_URL}/vanity/${code}`, {
+    const response = await fetch(`${VANITY_API_CONFIG.BASE_URL}/vanity/${code}`, {
       method: 'GET',
-      headers: API_CONFIG.HEADERS,
+      headers: VANITY_API_CONFIG.HEADERS,
     });
+
+    // Handle rate limiting
+    if (response.status === 429) {
+      const errorData = await response.json();
+      toast.error(errorData.error || 'Too many requests. Please try again later.');
+      return null;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      
+      // Handle Discord API specific errors
+      if (response.status === 401) {
+        toast.error('Authentication failed');
+        return null;
+      }
+      
+      toast.error(errorData.error || 'Failed to check vanity URL');
+      return null;
+    }
 
     const data = await response.json();
 
@@ -64,25 +92,6 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       };
     }
 
-    if (!response.ok) {
-      switch (response.status) {
-        case 429:
-          return {
-            available: false,
-            error: 'Too many requests. Please wait a moment.',
-            guild: null,
-            retryAfter: response.headers.get('Retry-After') ? parseInt(response.headers.get('Retry-After')!) : undefined
-          };
-        default:
-          return {
-            available: false,
-            error: data.error || data.message || `Failed to check vanity URL: ${response.status}`,
-            guild: null
-          };
-      }
-    }
-    
-    // Handle taken vanity URLs
     if (!isValidGuildData(data)) {
       console.error('Unexpected API response format:', data);
       return {
@@ -129,11 +138,8 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
       }
     };
   } catch (error) {
-    console.error('API Error:', error);
-    return {
-      available: false,
-      error: 'Failed to connect to Discord API',
-      guild: null
-    };
+    console.error('Vanity URL check error:', error);
+    toast.error('Network error occurred while checking vanity URL');
+    return null;
   }
 } 

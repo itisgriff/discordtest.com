@@ -1,4 +1,4 @@
-import { DiscordUser } from '@/types/discord';
+import type { DiscordUser } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
 import { API_CONFIG, DISCORD_CDN } from './discord';
 
@@ -22,86 +22,62 @@ function isUserResponse(data: any): boolean {
   );
 }
 
+// API configuration
+export const USER_API_CONFIG = {
+  BASE_URL: '/api',
+  HEADERS: {
+    'Content-Type': 'application/json',
+  },
+} as const;
+
 // Lookup user by ID
 export async function lookupUser(userId: string): Promise<DiscordUser | null> {
   try {
-    // Input validation
-    if (!userId.match(/^\d+$/)) {
-      toast.error("Invalid user ID format");
-      return null;
-    }
-
-    const response = await fetch(`${API_CONFIG.BASE_URL}/users/${userId}`, {
+    const response = await fetch(`${USER_API_CONFIG.BASE_URL}/users/${userId}`, {
       method: 'GET',
-      headers: API_CONFIG.HEADERS,
+      headers: USER_API_CONFIG.HEADERS,
     });
 
-    const data = await response.json();
+    // Handle rate limiting
+    if (response.status === 429) {
+      const errorData = await response.json();
+      toast.error(errorData.error || 'Too many requests. Please try again later.');
+      return null;
+    }
 
     if (!response.ok) {
-      if (isErrorResponse(data)) {
-        const errorMsg = `User lookup failed: ${data.error} (Status: ${response.status})`;
-        console.error(errorMsg);
-        switch (response.status) {
-          case 401:
-            toast.error('Unauthorized: Check bot permissions');
-            break;
-          case 404:
-            toast.error('User not found');
-            break;
-          case 429:
-            toast.error('Too many requests. Please wait a moment.');
-            break;
-          default:
-            toast.error(`Failed to fetch user: ${data.error}`);
-        }
-      } else {
-        console.error('Unexpected API error response:', data);
-        toast.error('An unexpected error occurred');
+      const errorData = await response.json();
+      
+      // Handle Discord API specific errors
+      if (response.status === 404) {
+        toast.error('User not found');
+        return null;
       }
+      
+      if (response.status === 401) {
+        toast.error('Authentication failed');
+        return null;
+      }
+      
+      toast.error(errorData.message || 'Failed to lookup user');
       return null;
     }
 
-    if (!isUserResponse(data)) {
-      console.error('Missing required user data:', data);
-      toast.error('Incomplete user data received');
-      return null;
-    }
-
-    // Type assertion since we know the shape but want to be flexible about presence
-    const fullUser = data as Record<string, any>;
+    const userData = await response.json();
     
-    const processedUser: DiscordUser = {
-      id: fullUser.id,
-      username: fullUser.username,
-      avatar: fullUser.avatar ? DISCORD_CDN.AVATAR(fullUser.id, fullUser.avatar) : null,
-      discriminator: fullUser.discriminator ?? '0',
-      public_flags: fullUser.public_flags ?? 0,
-      flags: fullUser.flags ?? 0,
-      banner: fullUser.banner ? DISCORD_CDN.BANNER(fullUser.id, fullUser.banner) : null,
-      accent_color: fullUser.accent_color ?? null,
-      global_name: fullUser.global_name ?? null,
-      avatar_decoration_data: fullUser.avatar_decoration_data ?? null,
-      banner_color: fullUser.banner_color ?? null,
-      bot: fullUser.bot ?? false,
-      verified: fullUser.verified ?? false,
-      clan: {
-        identity_guild_id: fullUser.clan?.identity_guild_id ?? null,
-        identity_enabled: fullUser.clan?.identity_enabled ?? false,
-        tag: fullUser.clan?.tag ?? null,
-        badge: fullUser.clan?.badge ?? null
-      },
-      primary_guild: {
-        identity_guild_id: fullUser.primary_guild?.identity_guild_id ?? null,
-        identity_enabled: fullUser.primary_guild?.identity_enabled ?? false,
-        tag: fullUser.primary_guild?.tag ?? null,
-        badge: fullUser.primary_guild?.badge ?? null
-      }
-    };
-    return processedUser;
+    // Transform avatar and banner URLs if they exist
+    if (userData.avatar) {
+      userData.avatar = `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.${userData.avatar.startsWith('a_') ? 'gif' : 'png'}?size=128`;
+    }
+    
+    if (userData.banner) {
+      userData.banner = `https://cdn.discordapp.com/banners/${userData.id}/${userData.banner}.png?size=600`;
+    }
+
+    return userData;
   } catch (error) {
-    console.error('API request failed:', error);
-    toast.error('Failed to connect to API');
+    console.error('User lookup error:', error);
+    toast.error('Network error occurred while looking up user');
     return null;
   }
 } 

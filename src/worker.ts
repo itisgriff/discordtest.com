@@ -7,9 +7,28 @@ type Bindings = {
   ASSETS: {
     fetch(request: Request): Promise<Response>
   }
+  USER_LOOKUP_RATE_LIMITER: {
+    limit(params: { key: string }): Promise<{ success: boolean }>
+  }
+  VANITY_CHECK_RATE_LIMITER: {
+    limit(params: { key: string }): Promise<{ success: boolean }>
+  }
+  GENERAL_API_RATE_LIMITER: {
+    limit(params: { key: string }): Promise<{ success: boolean }>
+  }
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
+
+// Helper function to get client identifier for rate limiting
+function getClientKey(request: Request): string {
+  // Try to get a unique identifier from headers
+  const cfConnectingIp = request.headers.get('CF-Connecting-IP')
+  const userAgent = request.headers.get('User-Agent') || 'unknown'
+  
+  // Use IP if available, otherwise fallback to a combination of headers
+  return cfConnectingIp || `${userAgent.slice(0, 50)}-${request.headers.get('CF-Ray') || 'unknown'}`
+}
 
 // Validation schemas
 const VanityURLSchema = z.object({
@@ -22,6 +41,19 @@ const UserIDSchema = z.object({
 
 // API Routes
 app.get('/api/vanity/:code', async (c) => {
+  // Rate limiting
+  const clientKey = getClientKey(c.req.raw)
+  const { success } = await c.env.VANITY_CHECK_RATE_LIMITER.limit({ 
+    key: `vanity:${clientKey}` 
+  })
+  
+  if (!success) {
+    return c.json({ 
+      error: 'Rate limit exceeded. Please try again later.',
+      retryAfter: 60 
+    }, 429)
+  }
+
   const result = VanityURLSchema.safeParse({ code: c.req.param('code') })
   if (!result.success) {
     return c.json({ error: 'Invalid vanity code' }, 400)
@@ -66,6 +98,19 @@ app.get('/api/vanity/:code', async (c) => {
 })
 
 app.get('/api/users/:userId', async (c) => {
+  // Rate limiting
+  const clientKey = getClientKey(c.req.raw)
+  const { success } = await c.env.USER_LOOKUP_RATE_LIMITER.limit({ 
+    key: `user:${clientKey}` 
+  })
+  
+  if (!success) {
+    return c.json({ 
+      error: 'Rate limit exceeded. Please try again later.',
+      retryAfter: 60 
+    }, 429)
+  }
+
   const result = UserIDSchema.safeParse({ userId: c.req.param('userId') })
   if (!result.success) {
     return c.json({ error: 'Invalid user ID' }, 400)
@@ -79,7 +124,24 @@ app.get('/api/users/:userId', async (c) => {
   })
 
   const data = await response.json()
-  return c.json(data)
+  return c.json(data, response.ok ? 200 : (response.status as any))
+})
+
+// General rate limiting middleware for all API routes
+app.use('/api/*', async (c, next) => {
+  const clientKey = getClientKey(c.req.raw)
+  const { success } = await c.env.GENERAL_API_RATE_LIMITER.limit({ 
+    key: `general:${clientKey}` 
+  })
+  
+  if (!success) {
+    return c.json({ 
+      error: 'Too many requests. Please slow down.',
+      retryAfter: 60 
+    }, 429)
+  }
+  
+  await next()
 })
 
 // Static Assets Handler

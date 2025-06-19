@@ -48,6 +48,11 @@ export default function VanityCheck() {
       const result = await checkVanityUrl(vanityCode);
       setRawApiResponse(result);
       
+      // Handle null response (rate limited or error)
+      if (!result) {
+        return;
+      }
+      
       if (result.available) {
         setIsAvailable(true);
         setGuildInfo(null);

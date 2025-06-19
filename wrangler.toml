@@ -13,5 +13,24 @@ enabled = true
 [vars]
 DISCORD_BOT_TOKEN = "REDACTED"  # For local development, this will be overridden by .env
 
+# Rate limiting bindings
+[[unsafe.bindings]]
+name = "USER_LOOKUP_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }  # 30 user lookups per minute per key
+
+[[unsafe.bindings]]
+name = "VANITY_CHECK_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 20, period = 60 }  # 20 vanity checks per minute per key
+
+[[unsafe.bindings]]
+name = "GENERAL_API_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1003"
+simple = { limit = 50, period = 60 }  # General API protection
+
 # [env.production.vars]
 # DISCORD_BOT_TOKEN = "REDACTED"

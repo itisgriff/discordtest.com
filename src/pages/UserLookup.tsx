@@ -46,6 +46,7 @@ function UserLookupContent() {
       if (result) {
         setUser(result);
       }
+      // Note: lookupUser now handles error display internally via toast
     } finally {
       setLoading(false);
     }
