@@ -2,11 +2,12 @@ import path from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 import { splitVendorChunkPlugin } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    plugins: [react(), splitVendorChunkPlugin()],
+    plugins: [react(), tailwindcss(), splitVendorChunkPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -21,15 +22,13 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
             'ui-vendor': ['@radix-ui/react-toast', 'lucide-react', 'sonner'],
-            'utils-vendor': ['date-fns', 'lodash', 'zod'],
+            'utils-vendor': ['zod'],
           }
         }
       },
       chunkSizeWarningLimit: 600
     },
-    css: {
-      postcss: './postcss.config.cjs',
-    },
+
     server: {
       host: 'localhost',
       port: 5173,

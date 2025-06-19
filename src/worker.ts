@@ -1,10 +1,12 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { handle } from 'hono/cloudflare-pages'
 
 // Define env type for Hono
 type Bindings = {
   DISCORD_BOT_TOKEN: string
+  ASSETS: {
+    fetch(request: Request): Promise<Response>
+  }
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -18,7 +20,7 @@ const UserIDSchema = z.object({
   userId: z.string().min(1)
 })
 
-// Vanity URL check endpoint
+// API Routes
 app.get('/api/vanity/:code', async (c) => {
   const result = VanityURLSchema.safeParse({ code: c.req.param('code') })
   if (!result.success) {
@@ -63,7 +65,6 @@ app.get('/api/vanity/:code', async (c) => {
   }, response.status === 429 ? 429 : 500)
 })
 
-// User lookup endpoint
 app.get('/api/users/:userId', async (c) => {
   const result = UserIDSchema.safeParse({ userId: c.req.param('userId') })
   if (!result.success) {
@@ -81,4 +82,17 @@ app.get('/api/users/:userId', async (c) => {
   return c.json(data)
 })
 
-export const onRequest = handle(app) 
+// Static Assets Handler
+app.all('*', async (c) => {
+  const url = new URL(c.req.url)
+  
+  // Handle SPA routing - serve index.html for non-API routes
+  if (!url.pathname.startsWith('/api/') && !url.pathname.includes('.')) {
+    return c.env.ASSETS.fetch(new Request(new URL('/index.html', url.origin)))
+  }
+  
+  // Serve static assets
+  return c.env.ASSETS.fetch(c.req.raw)
+})
+
+export default app 
