@@ -1,142 +1,148 @@
 # Discord Tools
 
-A modern web application for Discord server management and vanity URL checking. Built with Cloudflare Workers and Pages.
+A modern, fast Discord management toolkit built with React 19 and Cloudflare Workers. Streamline your Discord server administration with powerful utilities for vanity URL checking and user lookups.
 
-## Features
+## 🚀 Features
 
 ### Vanity URL Checker
-- Check availability of Discord vanity URLs in real-time
-- View server information for taken vanity URLs
-- Rate limiting to prevent API abuse
-- Caching for improved performance
+- Real-time availability checking for Discord vanity URLs
+- Instant server information preview for taken URLs
+- Smart caching for optimal performance
 
-### User Lookup
-- Look up Discord users by ID
-- View user profiles, avatars, and badges
-- Cached responses for faster lookups
+### User Lookup Tool
+- Quick Discord user verification by ID
+- Comprehensive profile data including badges and avatars
+- Efficient caching for faster subsequent lookups
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-### Frontend (Pages)
-- React + TypeScript
-- Vite for building
-- TailwindCSS for styling
-- React Query for data fetching
-- Cloudflare Pages for hosting
+**Frontend**
+- **React 19** - Latest React with modern concurrent features
+- **TypeScript** - Type-safe development
+- **Vite 6** - Lightning-fast build tool and dev server
+- **TailwindCSS 4** - Utility-first CSS framework
+- **React Router 7** - Modern client-side routing
+- **Radix UI** - Accessible, unstyled UI primitives
+- **Lucide React** - Beautiful SVG icons
+- **Zod** - TypeScript-first schema validation
 
-### Backend (Workers)
-- TypeScript
-- Hono.js for routing and middleware
-- Cloudflare Workers for serverless functions
-- Cloudflare KV for rate limiting
-- Cache API for response caching
+**Backend & Deployment**
+- **Cloudflare Workers** - Serverless edge computing
+- **Hono** - Fast, lightweight web framework
+- **Cloudflare Pages** - Static site hosting with edge optimization
+- **Cloudflare KV** - Edge key-value storage for caching
 
-## Architecture
+**Developer Experience**
+- **ESLint** - Code linting with modern rules
+- **TypeScript ESLint** - TypeScript-specific linting
+- **PostCSS** - CSS processing and optimization
+- **Wrangler** - Cloudflare development and deployment CLI
 
-The application is split into two main parts:
+## 🏗️ Architecture
 
-1. Frontend (`/src`)
-   - Single Page Application (SPA)
-   - Modern, responsive UI
-   - Real-time validation and feedback
-   - Error handling and loading states
+This is a modern full-stack application deployed on Cloudflare's edge network:
 
-2. Backend (`/server`)
-   - RESTful API endpoints
-   - Discord API integration
-   - Rate limiting and caching
-   - Error handling and validation
+- **Frontend**: React SPA with server-side routing support
+- **Backend**: Cloudflare Worker handling API requests and Discord integration
+- **Edge Deployment**: Global CDN distribution for optimal performance
+- **Type Safety**: End-to-end TypeScript for reliable development
 
-## API Endpoints
+## 📡 API Integration
 
-### Vanity URLs
-- `POST /api/vanity/:code`
-  - Check vanity URL availability
-  - Returns server info if URL is taken
+The application integrates with Discord's API to provide:
+- Vanity URL availability checking
+- User profile and badge information
+- Server metadata retrieval
+- Rate limiting and caching for optimal API usage
 
-### User Lookup
-- `GET /api/users/:id`
-  - Look up Discord user by ID
-  - Returns user profile information
-
-## Getting Started
+## 🚦 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Cloudflare account
-- Discord Bot Token
+- **Node.js** 18+ 
+- **pnpm** (recommended) or npm
+- **Cloudflare Account** (for deployment)
+- **Discord Bot Token** (for API access)
 
-### Local Development
+### Development Setup
 
-1. Clone the repository:
+1. **Clone and install**:
 ```bash
-git clone https://github.com/yourusername/discord-tools.git
+git clone <repository-url>
 cd discord-tools
+pnpm install
 ```
 
-2. Install dependencies:
+2. **Environment setup**:
+Create `.env` in the root directory:
 ```bash
-# Install frontend dependencies
-npm install
-
-# Install backend dependencies
-cd server
-npm install
+VITE_API_URL=http://localhost:8788/api
 ```
 
-3. Set up environment variables:
+3. **Start development server**:
 ```bash
-# In /server/.dev.vars
-DISCORD_BOT_TOKEN=your_token_here
-
-# In /.env
-VITE_API_URL=http://localhost:8787/api
+pnpm dev
 ```
 
-4. Start development servers:
+This starts both the frontend (localhost:5173) and Cloudflare Worker (localhost:8788).
+
+### Available Scripts
+
 ```bash
-# Start backend (in /server)
-npx wrangler dev
-
-# Start frontend (in root)
-npm run dev
+pnpm dev        # Start development server
+pnpm build      # Build for production
+pnpm preview    # Preview production build locally
+pnpm deploy     # Deploy to Cloudflare
+pnpm typecheck  # Type checking
+pnpm lint       # Code linting
 ```
 
-## Deployment
+## 🚀 Deployment
 
-See [Cloudflare Deployment Guide](docs/cloudflare-deployment.md) for detailed deployment instructions.
+### Cloudflare Pages + Workers
 
-### Quick Deploy
-1. Backend: `npx wrangler deploy --config server/wrangler.toml`
-2. Frontend: Push to main branch (auto-deploys via Pages)
+1. **Connect your repository** to Cloudflare Pages
+2. **Set build settings**:
+   - Build command: `pnpm build`
+   - Build output directory: `dist`
+3. **Configure environment variables** in Cloudflare dashboard
+4. **Deploy**: Push to main branch for automatic deployment
 
-## Rate Limiting
+### Manual Deployment
+```bash
+pnpm build && pnpm deploy
+```
 
-- Development: In-memory rate limiting
-- Production: Cloudflare KV-based rate limiting
-- 5 requests per 5 seconds per IP
-- Cached responses for 60 seconds
+## 🔧 Configuration
 
-## Caching
+### Environment Variables
+- `DISCORD_BOT_TOKEN` - Your Discord bot token (set in Cloudflare dashboard)
+- `VITE_API_URL` - API endpoint URL (development only)
 
-- Discord API responses cached using Cloudflare's Cache API
-- Cache TTL: 60 seconds
-- Separate caches for vanity URLs and user lookups
+### Rate Limiting
+- **Development**: In-memory rate limiting
+- **Production**: Cloudflare KV-based rate limiting
+- **Limits**: 5 requests per 5 seconds per IP
 
-## Contributing
+## 🎨 UI Components
+
+Built with modern, accessible components:
+- **Radix UI** primitives for accessibility
+- **Custom design system** with consistent styling
+- **Responsive design** for all device sizes
+- **Dark/light mode** support built-in
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+---
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built with [Cloudflare Workers](https://workers.cloudflare.com/)
-- Powered by [Discord API](https://discord.com/developers/docs/)
+Built with ❤️ using modern web technologies
