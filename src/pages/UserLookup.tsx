@@ -9,8 +9,14 @@ import { MetaTags } from '@/components/layout/MetaTags';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { DiscordUser } from '@/types/discord';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getUserFlags } from '@/lib/utils/userFlags';
 import { JsonViewer } from '@/components/ui/JsonViewer';
+import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useRetry } from '@/lib/hooks/useRetry';
+import { useLocalStorage } from '@/lib/hooks/useLocalStorage';
+import { validateDiscordId, getValidationHint } from '@/lib/validation';
+import { X, RefreshCw, AlertTriangle } from 'lucide-react';
 
 function UserLookupContent() {
   const { userId: urlUserId } = useParams<{ userId?: string }>();
@@ -19,6 +25,14 @@ function UserLookupContent() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<DiscordUser | null>(null);
   const [showRawData, setShowRawData] = useState(false);
+  const [validationError, setValidationError] = useState<string>('');
+  const [recentSearches, setRecentSearches] = useLocalStorage<string[]>('user-recent-searches', []);
+  
+  // Debounced validation
+  const debouncedUserId = useDebounce(userId, 300);
+  
+  // Retry mechanism
+  const { executeWithRetry, isRetrying, attemptCount } = useRetry(lookupUser);
 
   // Effect to handle URL parameter changes
   useEffect(() => {
@@ -27,6 +41,16 @@ function UserLookupContent() {
       handleLookup(urlUserId);
     }
   }, [urlUserId]);
+  
+  // Real-time validation
+  useEffect(() => {
+    if (debouncedUserId) {
+      const validation = validateDiscordId(debouncedUserId);
+      setValidationError(validation.isValid ? '' : validation.error || '');
+    } else {
+      setValidationError('');
+    }
+  }, [debouncedUserId]);
 
   const handleLookup = useCallback(async (id?: string) => {
     const lookupId = id || userId;
@@ -34,27 +58,66 @@ function UserLookupContent() {
       toast.error("Please enter a user ID");
       return;
     }
+    
+    // Validate input
+    const validation = validateDiscordId(lookupId);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Invalid Discord ID');
+      return;
+    }
 
     // Update URL if needed, but don't return early
     if (!id && lookupId !== urlUserId) {
       navigate(`/lookup/${lookupId}`);
     }
+    
+    // Add to recent searches
+    if (!recentSearches.includes(lookupId)) {
+      const newSearches = [lookupId, ...recentSearches.slice(0, 4)];
+      setRecentSearches(newSearches);
+    }
 
     setLoading(true);
     try {
-      const result = await lookupUser(lookupId);
+      const result = await executeWithRetry(lookupId);
       if (result) {
         setUser(result);
       }
-      // Note: lookupUser now handles error display internally via toast
+    } catch (error) {
+      console.error('User lookup error:', error);
+      if (error && typeof error === 'object' && 'status' in error) {
+        const status = (error as any).status;
+        if (status === 429) {
+          toast.error('Rate limit exceeded. Please try again later.');
+        } else if (status === 404) {
+          toast.error('User not found');
+        } else if (status === 401) {
+          toast.error('Authentication failed');
+        } else {
+          toast.error('Failed to lookup user');
+        }
+      } else {
+        toast.error('Network error occurred');
+      }
     } finally {
       setLoading(false);
     }
-  }, [userId, urlUserId, navigate]);
+  }, [userId, urlUserId, navigate, executeWithRetry, recentSearches, setRecentSearches]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value.replace(/[^0-9]/g, '');
     setUserId(value);
+  };
+  
+  const handleClearInput = () => {
+    setUserId('');
+    setValidationError('');
+    setUser(null);
+  };
+  
+  const handleRecentSearchClick = (searchId: string) => {
+    setUserId(searchId);
+    handleLookup(searchId);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -92,29 +155,86 @@ function UserLookupContent() {
 
       <Card className="p-6">
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter user ID"
-              value={userId}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              disabled={loading}
-              className="flex-1"
-              aria-label="User ID input"
-              minLength={17}
-              maxLength={20}
-              autoComplete="off"
-              data-form-type="other"
-              data-lpignore="true"
-            />
-            <Button 
-              onClick={() => handleLookup()}
-              disabled={loading || !userId}
-              className="bg-accent hover:bg-accent/90 min-w-[120px]"
-              aria-label={loading ? "Looking up..." : "Look up user"}
-            >
-              {loading ? "Looking up..." : "Look up"}
-            </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Enter user ID"
+                  value={userId}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={loading}
+                  className={`pr-8 ${validationError ? 'border-red-500' : ''}`}
+                  aria-label="User ID input"
+                  minLength={17}
+                  maxLength={20}
+                  autoComplete="off"
+                  data-form-type="other"
+                  data-lpignore="true"
+                />
+                {userId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearInput}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
+                    aria-label="Clear input"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              <Button 
+                onClick={() => handleLookup()}
+                disabled={loading || !userId || !!validationError}
+                className="bg-accent hover:bg-accent/90 min-w-[120px]"
+                aria-label={loading ? "Looking up..." : "Look up user"}
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    {isRetrying ? `Retry ${attemptCount}...` : 'Looking up...'}
+                  </>
+                ) : (
+                  'Look up'
+                )}
+              </Button>
+            </div>
+            
+            {/* Validation Error */}
+            {validationError && (
+              <p className="text-sm text-red-500 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                {validationError}
+              </p>
+            )}
+            
+            {/* Input Hint */}
+            {!validationError && (
+              <p className="text-xs text-muted-foreground">
+                {getValidationHint('discord-id')}
+              </p>
+            )}
+            
+            {/* Recent Searches */}
+            {recentSearches.length > 0 && !loading && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Recent searches:</p>
+                <div className="flex flex-wrap gap-1">
+                  {recentSearches.map((search) => (
+                    <Button
+                      key={search}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRecentSearchClick(search)}
+                      className="h-6 px-2 text-xs font-mono"
+                    >
+                      {search.slice(0, 8)}...{search.slice(-4)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {loading && <LoadingSkeleton />}
@@ -327,7 +447,7 @@ function UserLookupContent() {
               </div>
 
               {/* Raw Data Button */}
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center gap-2 mt-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -335,6 +455,18 @@ function UserLookupContent() {
                 >
                   View Raw Data
                 </Button>
+                {user && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLookup()}
+                    disabled={loading}
+                    className="gap-1"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Refresh
+                  </Button>
+                )}
               </div>
             </>
           )}

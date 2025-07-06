@@ -20,12 +20,14 @@ export const DISCORD_CDN = {
 
 export async function checkVanityUrl(code: string): Promise<VanityUrlResponse> {
   const response = await fetch(`${API_CONFIG.BASE_URL}/vanity/${code}`, {
-    method: 'POST',
+    method: 'GET',
     headers: API_CONFIG.HEADERS,
   });
 
   if (!response.ok) {
-    throw new Error('Failed to check vanity URL');
+    const error = new Error('Failed to check vanity URL');
+    (error as any).status = response.status;
+    throw error;
   }
 
   return response.json();
