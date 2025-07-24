@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,16 @@ function UserLookupContent() {
   
   // Retry mechanism
   const { executeWithRetry, isRetrying, attemptCount } = useRetry(lookupUser);
+
+  // Memoize expensive calculations
+  const accountCreatedDate = useMemo(() => {
+    if (!user?.id) return null;
+    return new Date(Number(BigInt(user.id) >> 22n) + 1420070400000).toLocaleDateString();
+  }, [user?.id]);
+
+  const userFlags = useMemo(() => {
+    return user && user.flags && user.flags > 0 ? getUserFlags(user.flags) : [];
+  }, [user?.flags]);
 
   // Effect to handle URL parameter changes
   useEffect(() => {
@@ -131,7 +141,8 @@ function UserLookupContent() {
     toast.success(`Copied ${label}`);
   };
 
-  const LoadingSkeleton = () => (
+  // Memoized loading skeleton component
+  const LoadingSkeleton = memo(() => (
     <div className="space-y-4 animate-pulse">
       <div className="flex items-center gap-4">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -141,7 +152,7 @@ function UserLookupContent() {
         </div>
       </div>
     </div>
-  );
+  ));
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-8">
@@ -340,7 +351,7 @@ function UserLookupContent() {
                     <div className="p-4 bg-card rounded-lg border">
                       <h4 className="text-sm font-medium mb-2 text-muted-foreground">Account Created</h4>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground">
-                        {new Date(Number(BigInt(user.id) >> 22n) + 1420070400000).toLocaleDateString()}
+                        {accountCreatedDate}
                       </span>
                     </div>
 
@@ -398,7 +409,7 @@ function UserLookupContent() {
                       <h4 className="text-sm font-medium mb-2 text-muted-foreground">Badges</h4>
                       {user.flags > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {getUserFlags(user.flags).map((flag) => (
+                          {userFlags.map((flag) => (
                             <span 
                               key={flag} 
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground cursor-pointer hover:bg-accent/20"

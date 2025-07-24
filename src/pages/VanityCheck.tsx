@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,16 @@ export default function VanityCheck() {
   
   // Retry mechanism
   const { executeWithRetry, isRetrying, attemptCount } = useRetry(checkVanityUrl);
+
+  // Memoize processed features to avoid recalculation on every render
+  const processedFeatures = useMemo(() => {
+    if (!guildInfo?.features) return [];
+    return guildInfo.features.map(feature => ({
+      key: feature,
+      displayName: feature.split('_').map(word => 
+        word.charAt(0) + word.slice(1).toLowerCase()).join(' ')
+    }));
+  }, [guildInfo?.features]);
 
   useEffect(() => {
     if (urlCode && urlCode !== code) {
@@ -180,7 +190,8 @@ export default function VanityCheck() {
     toast.success(`Copied ${label}`);
   };
 
-  const LoadingSkeleton = () => (
+  // Memoized loading skeleton component
+  const LoadingSkeleton = memo(() => (
     <div className="space-y-4 animate-pulse">
       <div className="flex items-center gap-4">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -194,9 +205,10 @@ export default function VanityCheck() {
         <Skeleton className="h-3 w-2/3" />
       </div>
     </div>
-  );
+  ));
 
-  const ContentRatingInfo = () => (
+  // Memoized content rating info component
+  const ContentRatingInfo = memo(() => (
     <div className="space-y-3 text-sm">
       <h5 className="font-medium">Content Rating Explained</h5>
       <div className="space-y-2">
@@ -223,9 +235,10 @@ export default function VanityCheck() {
         </div>
       </div>
     </div>
-  );
+  ));
 
-  const VerificationLevelInfo = () => (
+  // Memoized verification level info component
+  const VerificationLevelInfo = memo(() => (
     <div className="space-y-3 text-sm">
       <h5 className="font-medium">Verification Level Explained</h5>
       <div className="space-y-2">
@@ -266,7 +279,7 @@ export default function VanityCheck() {
         </div>
       </div>
     </div>
-  );
+  ));
 
   return (
     <>
@@ -558,18 +571,18 @@ export default function VanityCheck() {
                           </div>
                         )}
 
-                        {guildInfo.features.length > 0 && (
+                        {processedFeatures.length > 0 && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Features</h4>
                             <div className="flex flex-wrap gap-2">
-                              {guildInfo.features.map(feature => (
+                              {processedFeatures.map(feature => (
                                 <span 
-                                  key={feature} 
+                                  key={feature.key} 
                                   className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent-foreground cursor-pointer hover:bg-accent/20"
-                                  onClick={() => handlePillClick(feature, "feature")}
-                                  title={feature}
+                                  onClick={() => handlePillClick(feature.key, "feature")}
+                                  title={feature.key}
                                 >
-                                  {feature.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                                  {feature.displayName}
                                 </span>
                               ))}
                             </div>

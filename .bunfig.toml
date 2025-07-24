@@ -1,0 +1,20 @@
+[install]
+# Freeze lockfile to prevent unnecessary changes
+frozenLockfile = true
+
+# Enable global cache for faster installs
+cache = true
+
+# Install production dependencies by default
+production = false
+
+# Use npm registry for @types packages (often better compatibility)
+[install.scopes]
+"@types" = { registry = "https://registry.npmjs.org/" }
+
+[run]
+# Enable shell expansion for run scripts
+shell = true
+
+# Set default environment
+env = "development"

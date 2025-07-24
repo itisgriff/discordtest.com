@@ -1,5 +1,6 @@
 import { VanityUrlResponse } from '@/types/discord';
 import { toast } from '@/components/ui/toast';
+import { apiRequest, APIError, buildGuildIconUrl, buildGuildBannerUrl, buildGuildSplashUrl } from './client';
 
 // Minimal required fields for guild data
 interface MinimalGuildResponse {
@@ -36,14 +37,6 @@ function isValidGuildData(data: any): data is DiscordAPIResponse {
   );
 }
 
-// API configuration
-export const VANITY_API_CONFIG = {
-  BASE_URL: '/api',
-  HEADERS: {
-    'Content-Type': 'application/json',
-  },
-} as const;
-
 // Check vanity URL availability
 export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | null> {
   try {
@@ -56,32 +49,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
       };
     }
 
-    const response = await fetch(`${VANITY_API_CONFIG.BASE_URL}/vanity/${code}`, {
-      method: 'GET',
-      headers: VANITY_API_CONFIG.HEADERS,
-    });
-
-    // Handle rate limiting
-    if (response.status === 429) {
-      const errorData = await response.json();
-      toast.error(errorData.error || 'Too many requests. Please try again later.');
-      return null;
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      
-      // Handle Discord API specific errors
-      if (response.status === 401) {
-        toast.error('Authentication failed');
-        return null;
-      }
-      
-      toast.error(errorData.error || 'Failed to check vanity URL');
-      return null;
-    }
-
-    const data = await response.json();
+    const data = await apiRequest<any>(`/vanity/${code}`);
 
     // Handle the case where Discord API returns Error 10006 (Unknown Invite)
     // This means the vanity URL is available
@@ -119,15 +87,9 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
       guild: {
         id: guildData.id,
         name: guildData.name,
-        icon: guildData.icon 
-          ? `https://cdn.discordapp.com/icons/${guildData.id}/${guildData.icon}.png?size=128`
-          : null,
-        splash: guildData.splash
-          ? `https://cdn.discordapp.com/splashes/${guildData.id}/${guildData.splash}.png?size=1024`
-          : null,
-        banner: guildData.banner
-          ? `https://cdn.discordapp.com/banners/${guildData.id}/${guildData.banner}.png?size=1024`
-          : null,
+        icon: buildGuildIconUrl(guildData.id, guildData.icon),
+        splash: buildGuildSplashUrl(guildData.id, guildData.splash),
+        banner: buildGuildBannerUrl(guildData.id, guildData.banner),
         description: guildData.description ?? null,
         features: guildData.features ?? [],
         verification_level: guildData.verification_level ?? 0,
@@ -135,6 +97,18 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
         nsfw: guildData.nsfw ?? false,
         premium_subscription_count: guildData.premium_subscription_count ?? 0,
         premium_tier: guildData.premium_tier ?? 0,
+        // Computed camelCase properties for UI compatibility
+        verificationLevel: guildData.verification_level ?? 0,
+        nsfwLevel: guildData.nsfw_level ?? 0,
+        isNsfw: guildData.nsfw ?? false,
+        boostCount: guildData.premium_subscription_count ?? 0,
+        premiumTier: guildData.premium_tier ?? 0,
+        inviteCode: data.code || code,
+        inviteChannel: (data as any).channel ? {
+          id: (data as any).channel.id,
+          name: (data as any).channel.name,
+          type: (data as any).channel.type
+        } : undefined,
         channel: (data as any).channel ? {
           id: (data as any).channel.id,
           name: (data as any).channel.name,
@@ -144,7 +118,21 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
     };
   } catch (error) {
     console.error('Vanity URL check error:', error);
-    toast.error('Network error occurred while checking vanity URL');
+    
+    if (error instanceof APIError) {
+      if (error.status === 429) {
+        toast.error('Too many requests. Please try again later.');
+      } else if (error.status === 401) {
+        toast.error('Authentication failed');
+      } else if (error.status === 408) {
+        toast.error('Request timeout. Please try again.');
+      } else {
+        toast.error(error.message || 'Failed to check vanity URL');
+      }
+    } else {
+      toast.error('Network error occurred while checking vanity URL');
+    }
+    
     return null;
   }
 } 

@@ -1,13 +1,12 @@
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
-import { splitVendorChunkPlugin } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    plugins: [react(), tailwindcss(), splitVendorChunkPlugin()],
+    plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -19,10 +18,23 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'ui-vendor': ['@radix-ui/react-toast', 'lucide-react', 'sonner'],
-            'utils-vendor': ['zod'],
+          manualChunks(id) {
+            // Function-based chunking for better optimization
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@radix-ui') || id.includes('sonner')) {
+                return 'ui-vendor';
+              }
+              if (id.includes('lucide-react')) {
+                return 'icons-vendor';
+              }
+              if (id.includes('zod')) {
+                return 'utils-vendor';
+              }
+              return 'vendor';
+            }
           }
         }
       },
@@ -47,7 +59,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      exclude: ['lucide-react'],
+      // Remove lucide-react exclusion for better tree shaking
     },
   };
 });

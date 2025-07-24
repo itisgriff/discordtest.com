@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check, Copy } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface JsonViewerProps {
@@ -45,6 +45,10 @@ function syntaxHighlight(json: string): { __html: string } {
 export function JsonViewer({ data, title, open, onOpenChange }: JsonViewerProps) {
   const [copied, setCopied] = useState(false);
 
+  // Memoize the JSON string and syntax highlighting to avoid expensive recalculation
+  const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
+  const highlightedJson = useMemo(() => syntaxHighlight(jsonString), [jsonString]);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -57,7 +61,7 @@ export function JsonViewer({ data, title, open, onOpenChange }: JsonViewerProps)
   }, [open]);
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    navigator.clipboard.writeText(jsonString);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -108,7 +112,7 @@ export function JsonViewer({ data, title, open, onOpenChange }: JsonViewerProps)
           <pre className="bg-muted/50 p-4 rounded-lg overflow-auto">
             <code 
               className="text-sm font-mono"
-              dangerouslySetInnerHTML={syntaxHighlight(JSON.stringify(data, null, 2))}
+              dangerouslySetInnerHTML={highlightedJson}
             />
           </pre>
         </div>
