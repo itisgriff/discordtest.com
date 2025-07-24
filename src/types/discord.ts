@@ -15,6 +15,7 @@ export interface GuildInfo {
   nsfwLevel: number;
   isNsfw: boolean;
   boostCount?: number;
+  premiumTier?: number;
   inviteCode?: string;
   splash: string | null;
   banner: string | null;
@@ -23,6 +24,17 @@ export interface GuildInfo {
   expires_at?: string | null;
   flags?: number;
   guild_id?: string;
+  // Profile data
+  memberCount?: number;
+  onlineCount?: number;
+  tag?: string | null;
+  badge?: number;
+  badgeColorPrimary?: string | null;
+  badgeColorSecondary?: string | null;
+  badgeHash?: string | null;
+  traits?: string[];
+  visibility?: number;
+  customBannerHash?: string | null;
 }
 
 export interface ClanInfo {

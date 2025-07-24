@@ -59,10 +59,12 @@ app.get('/api/vanity/:code', async (c) => {
     return c.json({ error: 'Invalid vanity code' }, 400)
   }
 
+  
   const response = await fetch(`https://discord.com/api/v10/invites/${result.data.code}`, {
     headers: {
       'Authorization': `Bot ${c.env.DISCORD_BOT_TOKEN}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'User-Agent': 'DiscordBot (https://github.com/discord/discord-api-docs, 1.0)'
     }
   })
 
@@ -76,17 +78,13 @@ app.get('/api/vanity/:code', async (c) => {
 
   const data = await response.json()
   
+  
   // Handle successful response, which means the vanity URL is taken
   if (response.ok) {
     return c.json({
-      available: false,
-      type: data.type,
-      code: data.code,
-      expires_at: data.expires_at,
-      flags: data.flags,
-      guild_id: data.guild_id,
-      guild: data.guild,
-      channel: data.channel
+      ...data,  // Discord API response first
+      available: false,  // Our additions override Discord's data
+      error: null
     })
   }
   

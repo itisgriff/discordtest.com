@@ -102,6 +102,8 @@ export default function VanityCheck() {
 
       if (result.guild) {
         setIsAvailable(false);
+        const profile = (result as any).profile;
+        
         setGuildInfo({
           ...result.guild,
           type: result.type,
@@ -111,11 +113,23 @@ export default function VanityCheck() {
           guild_id: result.guild_id || result.guild.id,
           inviteChannel: result.guild.channel || (result as any).channel,
           boostCount: result.guild.premium_subscription_count,
+          premiumTier: result.guild.premium_tier,
           nsfwLevel: result.guild.nsfw_level,
           isNsfw: result.guild.nsfw,
           verificationLevel: result.guild.verification_level,
           splash: result.guild.splash,
-          banner: result.guild.banner
+          banner: result.guild.banner,
+          // Profile data (should be available now)
+          memberCount: profile?.member_count || (result as any).approximate_member_count,
+          onlineCount: profile?.online_count || (result as any).approximate_presence_count,
+          tag: profile?.tag,
+          badge: profile?.badge,
+          badgeColorPrimary: profile?.badge_color_primary,
+          badgeColorSecondary: profile?.badge_color_secondary,
+          badgeHash: profile?.badge_hash,
+          traits: profile?.traits || [],
+          visibility: profile?.visibility,
+          customBannerHash: profile?.custom_banner_hash
         });
       }
     } catch (error) {
@@ -391,10 +405,27 @@ export default function VanityCheck() {
                         />
                       )}
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">{guildInfo.name}</h3>
+                          {guildInfo.tag && (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                              {guildInfo.tag}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {guildInfo.features.includes("VERIFIED") ? "Verified Server" : "Discord Server"}
                         </p>
+                        {(guildInfo.memberCount || guildInfo.onlineCount) && (
+                          <div className="flex gap-4 text-xs text-muted-foreground mt-1">
+                            {guildInfo.memberCount && (
+                              <span>{guildInfo.memberCount.toLocaleString()} members</span>
+                            )}
+                            {guildInfo.onlineCount && (
+                              <span>{guildInfo.onlineCount.toLocaleString()} online</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <a
                         href={`https://discord.com/invite/${guildInfo.inviteCode}`}
@@ -421,9 +452,16 @@ export default function VanityCheck() {
                         {guildInfo?.boostCount !== undefined && (
                           <div>
                             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Boost Status</h4>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500/10 text-purple-500">
-                              {guildInfo.boostCount} Boost{guildInfo.boostCount !== 1 ? 's' : ''}
-                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500/10 text-purple-500">
+                                {guildInfo.boostCount} Boost{guildInfo.boostCount !== 1 ? 's' : ''}
+                              </span>
+                              {guildInfo.premiumTier !== undefined && (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/10 text-yellow-500">
+                                  Tier {guildInfo.premiumTier}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
 
@@ -537,6 +575,49 @@ export default function VanityCheck() {
                             </div>
                           </div>
                         )}
+
+                        {guildInfo.badge !== undefined && guildInfo.badge > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Badge</h4>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                style={{ 
+                                  background: guildInfo.badgeColorPrimary ? `linear-gradient(135deg, ${guildInfo.badgeColorPrimary}, ${guildInfo.badgeColorSecondary || guildInfo.badgeColorPrimary})` : '#5865f2'
+                                }}
+                              >
+                                {guildInfo.badge}
+                              </div>
+                              <span className="text-sm text-muted-foreground">Badge Level {guildInfo.badge}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {guildInfo.traits && guildInfo.traits.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Server Traits</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {guildInfo.traits.map((trait, index) => (
+                                <span 
+                                  key={index}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-500 cursor-pointer hover:bg-green-500/20"
+                                  onClick={() => handlePillClick(trait, "trait")}
+                                >
+                                  {trait}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {guildInfo.visibility !== undefined && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Visibility</h4>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/10 text-blue-500">
+                              {guildInfo.visibility === 1 ? 'Public' : guildInfo.visibility === 0 ? 'Private' : `Level ${guildInfo.visibility}`}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -558,6 +639,18 @@ export default function VanityCheck() {
                         <img 
                           src={guildInfo.splash} 
                           alt="Server Splash"
+                          className="w-full h-40 object-cover rounded-lg"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    {guildInfo.customBannerHash && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">Custom Banner</h4>
+                        <img 
+                          src={`https://cdn.discordapp.com/banners/${guildInfo.id}/${guildInfo.customBannerHash}.png?size=1024`}
+                          alt="Custom Server Banner"
                           className="w-full h-40 object-cover rounded-lg"
                           loading="lazy"
                         />

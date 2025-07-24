@@ -15,6 +15,7 @@ interface DiscordAPIResponse {
   expires_at?: string | null;
   flags?: number;
   guild_id?: string;
+  profile?: any;  // Profile data from Discord API
   channel?: {
     id: string;
     name: string;
@@ -112,6 +113,9 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
       expires_at: data.expires_at || null,
       flags: data.flags,
       guild_id: data.guild_id || guildData.id,
+      // Pass through the complete data from worker
+      profile: data.profile,  // Include profile data
+      channel: data.channel,
       guild: {
         id: guildData.id,
         name: guildData.name,
@@ -130,6 +134,7 @@ export async function checkVanityUrl(code: string): Promise<VanityUrlResponse | 
         nsfw_level: guildData.nsfw_level ?? 0,
         nsfw: guildData.nsfw ?? false,
         premium_subscription_count: guildData.premium_subscription_count ?? 0,
+        premium_tier: guildData.premium_tier ?? 0,
         channel: (data as any).channel ? {
           id: (data as any).channel.id,
           name: (data as any).channel.name,

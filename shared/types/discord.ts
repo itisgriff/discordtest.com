@@ -11,12 +11,36 @@ export interface DiscordGuild {
   nsfw_level: number;
   nsfw: boolean;
   premium_subscription_count?: number;
+  premium_tier?: number;
 }
 
 export interface DiscordChannel {
   id: string;
   name: string;
   type: number;
+}
+
+export interface DiscordGuildProfile {
+  id: string;
+  name: string;
+  icon_hash: string | null;
+  member_count?: number;
+  online_count?: number;
+  description: string | null;
+  banner_hash: string | null;
+  game_application_ids: string[];
+  game_activity: Record<string, any>;
+  tag: string | null;
+  badge: number;
+  badge_color_primary: string | null;
+  badge_color_secondary: string | null;
+  badge_hash: string | null;
+  traits: string[];
+  features: string[];
+  visibility: number;
+  custom_banner_hash: string | null;
+  premium_subscription_count?: number;
+  premium_tier: number;
 }
 
 export interface DiscordInviteResponse {
@@ -27,6 +51,7 @@ export interface DiscordInviteResponse {
   guild: DiscordGuild;
   guild_id?: string;
   channel?: DiscordChannel;
+  profile?: DiscordGuildProfile;
   approximate_member_count?: number;
   approximate_presence_count?: number;
   message?: string;
@@ -51,9 +76,12 @@ export interface VanityUrlResponse {
     nsfw_level: number;
     nsfw: boolean;
     premium_subscription_count?: number;
+    premium_tier?: number;
     splash: string | null;
     banner: string | null;
   } | null;
+  profile?: DiscordGuildProfile;
+  channel?: DiscordChannel;
   retryAfter?: number;
   type?: number;
   code?: string;
