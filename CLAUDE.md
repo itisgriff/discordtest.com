@@ -5,16 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Core Commands
-- `pnpm dev` - Start development server (frontend on :5173, Cloudflare Worker on :8788)
-- `pnpm build` - Build for production
-- `pnpm preview` - Build and preview production build locally
-- `pnpm deploy` - Build and deploy to Cloudflare
-- `pnpm typecheck` - Run TypeScript type checking
-- `pnpm lint` - Run ESLint
+- `bun dev` - Start development server (frontend on :5173, Cloudflare Worker on :8788)
+- `bun build` - Build for production
+- `bun preview` - Build and preview production build locally
+- `bun deploy` - Build and deploy to Cloudflare
+- `bun typecheck` - Run TypeScript type checking
+- `bun lint` - Run ESLint
 
 ### Package Management
-- Uses `pnpm` as the package manager
-- Lock file: `pnpm-lock.yaml`
+- Uses `bun` as the package manager
+- Lock file: `bun.lockb`
 
 ## Architecture Overview
 
@@ -71,7 +71,7 @@ shared/
 
 ### Deployment
 - **Platform**: Cloudflare Pages + Workers
-- **Build Command**: `pnpm build`
+- **Build Command**: `bun build`
 - **Build Output**: `dist/`
 - **Configuration**: `wrangler.toml` for Cloudflare Workers settings
 
@@ -101,7 +101,7 @@ shared/
 
 ## Development Notes
 
-- Frontend and backend run together with `pnpm dev`
+- Frontend and backend run together with `bun dev`
 - API routes are proxied through Vite dev server
 - Worker handles both API routes and static asset serving
 - SPA routing handled by serving index.html for non-API routes

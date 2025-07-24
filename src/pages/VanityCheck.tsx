@@ -601,9 +601,9 @@ export default function VanityCheck() {
                                 <span 
                                   key={index}
                                   className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/10 text-green-500 cursor-pointer hover:bg-green-500/20"
-                                  onClick={() => handlePillClick(trait, "trait")}
+                                  onClick={() => handlePillClick(typeof trait === 'string' ? trait : String(trait), "trait")}
                                 >
-                                  {trait}
+                                  {typeof trait === 'string' ? trait : String(trait)}
                                 </span>
                               ))}
                             </div>

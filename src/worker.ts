@@ -81,8 +81,20 @@ app.get('/api/vanity/:code', async (c) => {
   
   // Handle successful response, which means the vanity URL is taken
   if (response.ok) {
+    // Sanitize the response to prevent React rendering errors
+    const sanitizedData = {
+      ...data,
+      // Ensure traits are strings, not objects
+      traits: Array.isArray(data.traits) 
+        ? data.traits.map((trait: any) => typeof trait === 'string' ? trait : trait.label || trait.name || String(trait))
+        : data.traits,
+      // Remove complex objects that can't be rendered
+      game_activity: undefined,
+      emojis: undefined
+    };
+    
     return c.json({
-      ...data,  // Discord API response first
+      ...sanitizedData,
       available: false,  // Our additions override Discord's data
       error: null
     })
