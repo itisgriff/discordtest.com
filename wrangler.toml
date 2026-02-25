@@ -10,8 +10,7 @@ binding = "ASSETS"
 [observability]
 enabled = true
 
-[vars]
-DISCORD_BOT_TOKEN = "REDACTED"  # For local development, this will be overridden by .env
+# DISCORD_BOT_TOKEN is set via .dev.vars (local) and Cloudflare dashboard secrets (production)
 
 # Rate limiting bindings
 [[unsafe.bindings]]
@@ -32,5 +31,3 @@ type = "ratelimit"
 namespace_id = "1003"
 simple = { limit = 50, period = 60 }  # General API protection
 
-# [env.production.vars]
-# DISCORD_BOT_TOKEN = "REDACTED"
